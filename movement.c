@@ -5,20 +5,19 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "ev3.h"
-#include "ev3_port.h"
-#include "ev3_tacho.h"
-#include "ev3_sensor.h"
+#include "/src/ev3dev-c/source/ev3/ev3.h"
+#include "/src/ev3dev-c/source/ev3/ev3_port.h"
+#include "/src/ev3dev-c/source/ev3/ev3_tacho.h"
+#include "/src/ev3dev-c/source/ev3/ev3_sensor.h"
 #include <unistd.h>
 
 #define Sleep( msec ) usleep(( msec ) * 1000 )
 
-
-int move_forward(int dist){ //Makes the robot move forward for dist cm
-    int i;
+//Move one tacho for 5sec and cadencé
+void move_forward(int dist){ //Makes the robot move forward for dist cm
     uint8_t sn;
-    FLAGS_T state;
     int port=65;
+    FLAGS_T state;
 
     for (port=65; port<67; port++){
         if ( ev3_search_tacho_plugged_in(port,0, &sn, 0 )) {
@@ -34,7 +33,6 @@ int move_forward(int dist){ //Makes the robot move forward for dist cm
             /* Waiting for the tacho to stop */
             Sleep( 100 );
 
-            /*
             do {
                 get_tacho_state_flags( sn, &state );
             } while ( state );
@@ -43,11 +41,7 @@ int move_forward(int dist){ //Makes the robot move forward for dist cm
             set_tacho_ramp_up_sp( sn, 0 );
             set_tacho_ramp_down_sp( sn, 0 );
             set_tacho_position_sp( sn, 90 );
-            for ( i = 0; i < 8; i++ ) {
-                set_tacho_command_inx( sn, TACHO_RUN_TO_REL_POS );
-                Sleep( 500 );
-            }
-            */
+            set_tacho_command_inx( sn, TACHO_RUN_TO_REL_POS );
 
         } else {
             printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", (port-64));
@@ -57,8 +51,8 @@ int move_forward(int dist){ //Makes the robot move forward for dist cm
 
 int init_robot( void ) // Find the tachos
 {
-    int i, s;
-    uint8_t sn;
+    int i;
+    char s[256];
 
 #ifndef __ARM_ARCH_4T__
     /* Disable auto-detection of the brick */
@@ -94,3 +88,13 @@ int exit_robot(void){ //Exit the ev3
     return ( 0 );
 }
 
+
+
+
+int main(){
+  init_robot();
+  move_forward(10);
+  exit_robot();
+  printf("Hello world");
+  return 1;
+}
