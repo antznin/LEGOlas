@@ -19,20 +19,22 @@ int move_forward(int dist){ //Makes the robot move forward for dist cm
     uint8_t sn;
     FLAGS_T state;
     int port=65;
-    
+
     for (port=65; port<67; port++){
         if ( ev3_search_tacho_plugged_in(port,0, &sn, 0 )) {
             int max_speed;
             get_tacho_max_speed( sn, &max_speed );
             printf("  max speed = %d\n", max_speed );
             set_tacho_stop_action_inx( sn, TACHO_COAST );
-            set_tacho_speed_sp( sn, max_speed * 2 / 3 );
-            set_tacho_time_sp( sn, 5000 );
-            set_tacho_ramp_up_sp( sn, 2000 );
-            set_tacho_ramp_down_sp( sn, 2000 );
+            //set_tacho_speed_sp( sn, max_speed * 2 / 3 );
+            //set_tacho_time_sp( sn, 5000 );
+            //set_tacho_ramp_up_sp( sn, 2000 );
+            //set_tacho_ramp_down_sp( sn, 2000 );
             set_tacho_command_inx( sn, TACHO_RUN_TIMED );
-            /* Wait tacho stop */
+            /* Waiting for the tacho to stop */
             Sleep( 100 );
+
+            /*
             do {
                 get_tacho_state_flags( sn, &state );
             } while ( state );
@@ -45,7 +47,8 @@ int move_forward(int dist){ //Makes the robot move forward for dist cm
                 set_tacho_command_inx( sn, TACHO_RUN_TO_REL_POS );
                 Sleep( 500 );
             }
-            
+            */
+
         } else {
             printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", (port-64));
         }
@@ -81,7 +84,7 @@ int init_robot( void ) // Find the tachos
             printf("  port = %d %d\n", ev3_tacho_desc_port(i), ev3_tacho_desc_extport(i));
         }
     }
-    
+
     return(0);
 }
 
