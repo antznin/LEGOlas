@@ -25,8 +25,16 @@
 
 CC 			= arm-linux-gnueabi-gcc
 CFLAGS 		= -O2 -g -std=gnu99 -W -Wall -Wno-comment
-INCLUDES 	= -I./ev3dev-c/source/ev3 -I./include/
+INCLUDES 	= -I./ev3dev-c/source/ev3
 LDFLAGS 	= -L./libraries -lrt -lm -lev3dev-c -lpthread -lbluetooth
 BUILD_DIR 	= ./build
 SOURCE_DIR 	= ./source
 
+ballDetection:
+	export LD_LIBRARY_PATH=~/ev3dev-c/lib
+	$(CC) $(INCLUDES) $(CFLAGS) -c ./ballDetection.c -o ballDetection.o
+	$(CC) ballDetection.o -Wall -L./libraries -lrt -lm -lev3dev-c -o ballDetection
+
+clean:
+	rm -f ./ballDetection.o
+	rm -f ./ballDetection
