@@ -10,38 +10,36 @@
 #include "/src/ev3dev-c/source/ev3/ev3_tacho.h"
 #include "/src/ev3dev-c/source/ev3/ev3_sensor.h"
 #include <unistd.h>
+#include <math.h>
 
 #define Sleep( msec ) usleep(( msec ) * 1000 )
 
-//Move one tacho for 5sec and cadencé
+/*******************************************************/
+/* TODO : determine the time to run to go over dist cm */
+/*******************************************************/
+
 void move_forward(int dist){ //Makes the robot move forward for dist cm
     uint8_t sn;
     int port=65;
-    FLAGS_T state;
+    //FLAGS_T state;
 
-    for (port=65; port<67; port++){
+    for (port=65; port<69; port++){
         if ( ev3_search_tacho_plugged_in(port,0, &sn, 0 )) {
-            int max_speed;
+            
+            int max_speed, speed, count_per_meter;
+            float t; //t in sec
+            get_tacho_count_per_m(sn, &count_per_meter);
             get_tacho_max_speed( sn, &max_speed );
             printf("  max speed = %d\n", max_speed );
             set_tacho_stop_action_inx( sn, TACHO_COAST );
-            //set_tacho_speed_sp( sn, max_speed * 2 / 3 );
-            //set_tacho_time_sp( sn, 5000 );
-            //set_tacho_ramp_up_sp( sn, 2000 );
-            //set_tacho_ramp_down_sp( sn, 2000 );
+            speed = max_speed * (2/3);
+            set_tacho_speed_sp( sn, speed ); //set tacho speed to (2/3)*max_speed
+            t = (count_per_meter * dist * pow(10,-2))/speed ;
+            printf("Tacho will run for %f seconds \n", t);
+            set_tacho_time_sp( sn, t*pow(10,3) ); //Tacho will run or 5s
             set_tacho_command_inx( sn, TACHO_RUN_TIMED );
             /* Waiting for the tacho to stop */
             Sleep( 100 );
-
-            do {
-                get_tacho_state_flags( sn, &state );
-            } while ( state );
-            printf( "run to relative position...\n" );
-            set_tacho_speed_sp( sn, max_speed / 2 );
-            set_tacho_ramp_up_sp( sn, 0 );
-            set_tacho_ramp_down_sp( sn, 0 );
-            set_tacho_position_sp( sn, 90 );
-            set_tacho_command_inx( sn, TACHO_RUN_TO_REL_POS );
 
         } else {
             printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", (port-64));
@@ -95,6 +93,5 @@ int main(){
   init_robot();
   move_forward(10);
   exit_robot();
-  printf("Hello world");
   return 1;
 }
