@@ -14,9 +14,6 @@
 
 #define Sleep( msec ) usleep(( msec ) * 1000 )
 
-/*******************************************************/
-/* TODO : determine the time to run to go over dist cm */
-/*******************************************************/
 
 void move_forward(int dist){ //Makes the robot move forward for dist cm
     uint8_t sn;
