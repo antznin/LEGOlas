@@ -3,14 +3,16 @@
 /*************    Written by Yasmine Bennani   *************/
 /***********************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <math.h>
+#include "ev3_sensor.h"
 
 
-/* User defined constants */
-#define WHEEL_DIAMETER 0.069
-#define PULSES_PER_REVOLUTION 48.0
-#define AXLE_LENGTH 0.125
+#define FIELD_WIDTH 1.20 //Width of the field in meter
+#define FIELD_LENGTH 1.0 //Length of the field
 
-/* Fixed constants */
 #define PI 3.14159
 
 
@@ -33,64 +35,59 @@ void init_pos()
 }
 
 
-void dead_reckoning()  //Thread, to know the position at any time
+void dead_reckoning(int COUNT_PER_METER, int left_speed, int right_speed, float dist)  //Thread, to know the position at any time
 {
-  float dist_left;
-  float dist_right;
-  int left_ticks;
-  int right_ticks;
-  float expr1;
-  float cos_current;
-  float sin_current;
-  float right_minus_left;
-  float MUL_COUNT;
-
-  MUL_COUNT  = PI * WHEEL_DIAMETER / PULSES_PER_REVOLUTION;
-
-  while(1)
-  {
-    left_ticks = left_count;
-    right_ticks = right_count;
-    left_count = 0;
-    right_count = 0;
-
-    dist_left = (float)left_ticks * MUL_COUNT;
-    dist_right = (float)right_ticks * MUL_COUNT;
-
-    cos_current = cos(current_position.theta);
-    sin_current = sin(current_position.theta);
-
-    if (left_ticks == right_ticks)
+    uint8_t sn;
+    uint8_t sn_compass;
+    float theta; //In radian
+    float value; //In degree, compass output
+    float dist_left;
+    float dist_right;
+    float expr1;
+    float cos_current;
+    float sin_current;
+    float right_minus_left;
+    
+    
+    while(1)
     {
-      /* Moving in a straight line */
-      current_position.x += dist_left * cos_current;
-      current_position.y += dist_left * sin_current;
-    }
-    else
-    {
-      /* Moving in an arc */
-      expr1 = AXLE_LENGTH * (dist_right + dist_left)
-              / 2.0 / (dist_right - dist_left);
+        if (ev3_search_sensor(HT_NXT_COMPASS, &sn_compass,0)){
+            printf("COMPASS found, reading compass...\n");
+            if ( !get_sensor_value0(sn_compass, &value )) {
+                value = 0;
+            }
+            printf( "\r(%f) \n", value);
+            fflush( stdout );
+        }
+        
+        theta = value * (PI / 180);
+        current_position.theta = theta;
+        cos_current = cos(current_position.theta);
+        sin_current = sin(current_position.theta);
 
-      right_minus_left = dist_right - dist_left;
+        if (left_speed == right_speed)
+        {
+            /* Moving in a straight line */
+            current_position.x += dist * cos_current;
+            current_position.y += dist * sin_current;
+        }
+        else
+        {
+            /* The robot is just turning around */
+            current_position.x = current_position.x;
+            current_position.y = current_position.y;
 
-      current_position.x += expr1 * (sin(right_minus_left /
-                            AXLE_LENGTH + current_position.theta) - sin_current);
+            /* Get new orientation from sensor */
+            current_position.theta = theta;
 
-      current_position.y -= expr1 * (cos(right_minus_left /
-                            AXLE_LENGTH + current_position.theta) - cos_current);
-
-      /* Calculate new orientation */
-      current_position.theta += right_minus_left / AXLE_LENGTH;
-
-      /* Keep in the range -PI to +PI */
-      while(current_position.theta > PI)
-        current_position.theta -= (2.0*PI);
-      while(current_position.theta < -PI)
-        current_position.theta += (2.0*PI);
-    }
+            /* Keep in the range -PI to +PI */
+            while(current_position.theta > PI)
+                current_position.theta -= (2.0*PI);
+            while(current_position.theta < -PI)
+                current_position.theta += (2.0*PI);
+        }
 
     sleep(0.1);
-  }
+    }
 }
 
