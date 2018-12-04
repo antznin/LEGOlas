@@ -17,32 +17,39 @@
 #define PI 3.1415
 #define WHEEL_DIAM 5.5 //Wheels' diameter is 5.5 cm
 
-void turn(int angle) {
+float init_value_compass;
+
+void turn(float angle) {
     uint8_t sn, sn_compass;
     int max_speed;
-    float init_value, value;
+    float value, init;
 
-    if (ev3_search_sensor(HT_NXT_COMPASS, &sn_compass,0)){
-      get_sensor_value0(sn_compass, &init_value );
+    if (ev3_search_sensor(LEGO_EV3_GYRO, &sn_compass,0)){
+      get_sensor_value0(sn_compass, &init );
       //fflush( stdout );
     }
 
+
     if(angle > 0) {
-        if( ev3_search_tacho_plugged_in(67, 0, &sn, 0)) {
-            get_tacho_max_speed(sn, &max_speed);
-            printf("max_speed = %d\n", max_speed);
-            set_tacho_stop_action_inx( sn, TACHO_COAST );
-            set_tacho_speed_sp( sn, max_speed * 2/3); //set tacho speed to (2/3)*max_speed
-            get_sensor_value0(sn_compass, &value);
-            while(init_value - value != angle){
-                //set_tacho_command_inx(sn, TACHO_RUN_FOREVER);
+        for(int port=66; port < 68; port++) {
+            if( ev3_search_tacho_plugged_in(port, 0, &sn, 0)) {
+                get_tacho_max_speed(sn, &max_speed);
+                set_tacho_stop_action_inx( sn, TACHO_COAST );
+                if(port == 66)
+                    set_tacho_speed_sp( sn, max_speed * 1/30); //set tacho speed to (2/3)*max_speed
+                else
+                    set_tacho_speed_sp(sn, - max_speed * 1/30);
                 get_sensor_value0(sn_compass, &value);
-                printf("Compass value : %f \n", value);
+                set_tacho_command_inx(sn, TACHO_RUN_FOREVER);
+                while(value - (angle  + init) != 0.0){
+                    get_sensor_value0(sn_compass, &value);
+                    printf("Value - (angle + init ) = %f \n ", value - (angle + init));
+                }
+                set_tacho_command_inx( sn, TACHO_STOP);
             }
-            set_tacho_stop_action_inx( sn, TACHO_COAST);
-        }
-        else {
-            printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", 67);
+            else {
+                printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", 67);
+            }
         }
 
     }
@@ -82,7 +89,7 @@ void move_forward(int dist){ //Makes the robot move forward for dist cm
                 set_tacho_command_inx( sn, TACHO_RUN_TIMED );
             }
             else {
-                float t_left; // = t + 200 ms because otherwise turns too much
+                float t_left; // = t + 150 ms because otherwise turns too much
                 t_left = (t*1000) + 150;
                 set_tacho_time_sp(sn, t_left);
                 set_tacho_command_inx( sn, TACHO_RUN_TIMED );
@@ -102,7 +109,6 @@ int init_robot( void ) // Find the tachos
     uint8_t sn_compass;
     int i;
     char s[256];
-    float value;
 
     if(ev3_tacho_init() == -1)
        return 1;
@@ -127,12 +133,12 @@ int init_robot( void ) // Find the tachos
 
     //Run all sensors
     ev3_sensor_init();
-    if (ev3_search_sensor(HT_NXT_COMPASS, &sn_compass,0)){
+    if (ev3_search_sensor(LEGO_EV3_GYRO, &sn_compass,0)){
       printf("COMPASS found, reading compass...\n");
-      if ( !get_sensor_value0(sn_compass, &value )) {
-        value = 0;
+      if ( !get_sensor_value0(sn_compass, &init_value_compass )) {
+        init_value_compass = 0;
       }
-      printf( "\r(%f) \n", value);
+      printf( "\r(%f) \n", init_value_compass);
       fflush( stdout );
     }
 
