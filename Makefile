@@ -32,9 +32,9 @@ SOURCE_DIR 	= ./source
 
 ballDetection:
 	export LD_LIBRARY_PATH=~/ev3dev-c/lib
-	$(CC) $(INCLUDES) $(CFLAGS) -c ./ballDetection.c -o ballDetection.o
-	$(CC) ballDetection.o -Wall -L./libraries -lrt -lm -lev3dev-c -o ballDetection
+	$(CC) $(INCLUDES) $(CFLAGS) -c ./ballDetection.c -o ballDetection.tmp
+	$(CC) ballDetection.tmp -Wall -L./libraries -lrt -lm -lev3dev-c -o ballDetection.o
 
 clean:
+	rm -f ./ballDetection.tmp
 	rm -f ./ballDetection.o
-	rm -f ./ballDetection
