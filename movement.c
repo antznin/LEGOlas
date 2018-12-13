@@ -1,3 +1,4 @@
+
 /***************************************************************************************************/
 /*************************         TACHOS MOVEMENTS FUNCTIONS         ******************************/
 /*************************         Written by Yasmine Bennani         ******************************/
@@ -10,56 +11,107 @@
 #include "/src/ev3dev-c/source/ev3/ev3_tacho.h"
 #include "/src/ev3dev-c/source/ev3/ev3_sensor.h"
 #include <unistd.h>
+#include <math.h>
 
 #define Sleep( msec ) usleep(( msec ) * 1000 )
+#define PI 3.1415
+#define WHEEL_DIAM 5.5 //Wheels' diameter is 5.5 cm
 
-//Move one tacho for 5sec and cadencé
-void move_forward(int dist){ //Makes the robot move forward for dist cm
-    uint8_t sn;
-    int port=65;
-    FLAGS_T state;
+float init_value_compass;
 
-    for (port=65; port<67; port++){
-        if ( ev3_search_tacho_plugged_in(port,0, &sn, 0 )) {
-            int max_speed;
-            get_tacho_max_speed( sn, &max_speed );
-            printf("  max speed = %d\n", max_speed );
+void turn(float angle) {
+    uint8_t sn, sn_compass;
+    int max_speed;
+    float value, init;
+
+    if (ev3_search_sensor(LEGO_EV3_GYRO, &sn_compass,0)){
+      get_sensor_value0(sn_compass, &init );
+      //fflush( stdout );
+    }
+
+
+    if(angle > 0) {
+        for(int port=66; port < 68; port++) {
+            if( ev3_search_tacho_plugged_in(port, 0, &sn, 0)) {
+                get_tacho_max_speed(sn, &max_speed);
+                set_tacho_stop_action_inx( sn, TACHO_COAST );
+                if(port == 66)
+                    set_tacho_speed_sp( sn, max_speed * 1/30); //set tacho speed to (2/3)*max_speed
+                else
+                    set_tacho_speed_sp(sn, - max_speed * 1/30);
+                get_sensor_value0(sn_compass, &value);
+                set_tacho_command_inx(sn, TACHO_RUN_FOREVER);
+                while(value - (angle  + init) != 0.0){
+                    get_sensor_value0(sn_compass, &value);
+                    printf("Value - (angle + init ) = %f \n ", value - (angle + init));
+                }
+                set_tacho_command_inx( sn, TACHO_STOP);
+            }
+            else {
+                printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", 67);
+            }
+        }
+
+    }
+    else {
+        if( ev3_search_tacho_plugged_in(66, 0, &sn, 0)) {
+            get_tacho_max_speed(sn, &max_speed);
             set_tacho_stop_action_inx( sn, TACHO_COAST );
-            //set_tacho_speed_sp( sn, max_speed * 2 / 3 );
-            //set_tacho_time_sp( sn, 5000 );
-            //set_tacho_ramp_up_sp( sn, 2000 );
-            //set_tacho_ramp_down_sp( sn, 2000 );
+            set_tacho_speed_sp( sn, max_speed * 2/3); //set tacho speed to (2/3)*max_speed
+            set_tacho_time_sp( sn, 2000 ); //Tacho will run or t sec
             set_tacho_command_inx( sn, TACHO_RUN_TIMED );
-            /* Waiting for the tacho to stop */
-            Sleep( 100 );
-
-            do {
-                get_tacho_state_flags( sn, &state );
-            } while ( state );
-            printf( "run to relative position...\n" );
-            set_tacho_speed_sp( sn, max_speed / 2 );
-            set_tacho_ramp_up_sp( sn, 0 );
-            set_tacho_ramp_down_sp( sn, 0 );
-            set_tacho_position_sp( sn, 90 );
-            set_tacho_command_inx( sn, TACHO_RUN_TO_REL_POS );
-
-        } else {
-            printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", (port-64));
+        }
+        else {
+            printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", 66);
         }
     }
 }
 
+void move_forward(int dist){ //Makes the robot move forward for dist cm
+    uint8_t sn;
+    int port;
+    float t; //t in sec
+
+    for (port=66; port<68; port++){
+        if ( ev3_search_tacho_plugged_in(port,0, &sn, 0 )) {
+            int max_speed, count_per_rot;
+            get_tacho_count_per_rot(sn, &count_per_rot);
+            get_tacho_max_speed( sn, &max_speed );
+            printf("  count per rot = %d\n", count_per_rot);
+            printf("  max speed = %d\n", max_speed );
+            set_tacho_stop_action_inx( sn, TACHO_COAST );
+            set_tacho_speed_sp( sn, max_speed * 2/3); //set tacho speed to (2/3)*max_speed
+            t = (float) (count_per_rot * dist )/(max_speed * 2/3 * PI * WHEEL_DIAM) ;
+            printf("Tacho will run for %f seconds \n", t);
+            set_tacho_time_sp( sn, t*1000 ); //Tacho will run or t sec
+            if(port == 66) {
+                Sleep(100);
+                set_tacho_command_inx( sn, TACHO_RUN_TIMED );
+            }
+            else {
+                float t_left; // = t + 150 ms because otherwise turns too much
+                t_left = (t*1000) + 150;
+                set_tacho_time_sp(sn, t_left);
+                set_tacho_command_inx( sn, TACHO_RUN_TIMED );
+           }
+
+        } else {
+            printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", (port-64));
+            t = 0;
+        }
+    }
+    /* Waiting for the tacho to stop */
+    Sleep( t*1000 );
+}
+
 int init_robot( void ) // Find the tachos
 {
+    uint8_t sn_compass;
     int i;
     char s[256];
 
-#ifndef __ARM_ARCH_4T__
-    /* Disable auto-detection of the brick */
-    ev3_brick_addr = "192.168.0.204";
-
-#endif
-    if ( ev3_init() == -1 ) return ( 1 );
+    if(ev3_tacho_init() == -1)
+       return 1;
 
 #ifndef __ARM_ARCH_4T__
     printf( "The EV3 brick auto-detection is DISABLED,\nwaiting %s online with plugged tacho...\n", ev3_brick_addr );
@@ -79,6 +131,17 @@ int init_robot( void ) // Find the tachos
         }
     }
 
+    //Run all sensors
+    ev3_sensor_init();
+    if (ev3_search_sensor(LEGO_EV3_GYRO, &sn_compass,0)){
+      printf("COMPASS found, reading compass...\n");
+      if ( !get_sensor_value0(sn_compass, &init_value_compass )) {
+        init_value_compass = 0;
+      }
+      printf( "\r(%f) \n", init_value_compass);
+      fflush( stdout );
+    }
+
     return(0);
 }
 
@@ -92,9 +155,9 @@ int exit_robot(void){ //Exit the ev3
 
 
 int main(){
-  init_robot();
-  move_forward(10);
-  exit_robot();
-  printf("Hello world");
-  return 1;
+    init_robot();
+//    move_forward(20);
+    turn(90);
+    exit_robot();
+    return 1;
 }
