@@ -18,91 +18,210 @@
 #define WHEEL_DIAM 5.5 //Wheels' diameter is 5.5 cm
 
 float init_value_compass;
+void move_forward(int dist);
+void turn(float angle);
+void go_to_corner(int to_right); // Go to right corner if to_right = 1, otherwise go to left corner
+void shoot_from_stage1();
+void shoot_from_stage2();
+void shoot_from_stage3();
+void shoot_from_stage4();
+void shoot_from_stage5();
+
+/******************************* SHOOT FROM STAGE FUNCTIONS **************************************/
+/*************** The robot will scan the field from 5 different stages, **************************/
+/************ and if he has found the ball he has to go to the shoot position ********************/
+/*************************************************************************************************/
+
+/* Go to shoot position from stage 1 */
+void shoot_from_stage1(){
+    turn(-30);
+    move_forward(-20);
+    turn(30);
+}
+
+/* Go to shoot position from stage 2 */
+void shoot_from_stage2(){
+    turn(-60);
+    move_forward(60);
+    turn(-120);
+}
+
+/* Go to shoot position from stage 3 */
+void shoot_from_stage3(){
+    turn(-30);
+    move_forward(60);
+    turn(-60);
+}
+
+/* Go to shoot position from stage 4 */
+void shoot_from_stage4(){
+    turn(-45);
+    move_forward(50);
+    turn(45);
+}
+
+/* Go to shoot position from stage 5 */
+void shoot_from_stage5(){
+    turn(-60);
+    move_forward(50);
+    turn(-30);
+}
+
+
+/* Go to left corner from its beginning position */
+void go_to_corner(int to_right){
+    move_forward(53); /* Move to the wall */
+
+    if(to_right) {
+        turn(90);
+        move_forward(40);
+        turn(90);
+    }
+    else {
+        turn(-90);
+        move_forward(40);
+        turn(-90);
+    }
+}
+
 
 void turn(float angle) {
-    uint8_t sn, sn_compass;
-    int max_speed;
+    uint8_t sn_left, sn_right, sn_compass;
+    int max_speed_left, max_speed_right, max_speed;
+    int port_left = 66; /* Left wheel */
+    int port_right = 67; /* Right wheel */
     float value, init;
 
     if (ev3_search_sensor(LEGO_EV3_GYRO, &sn_compass,0)){
       get_sensor_value0(sn_compass, &init );
-      //fflush( stdout );
     }
 
 
     if(angle > 0) {
-        for(int port=66; port < 68; port++) {
-            if( ev3_search_tacho_plugged_in(port, 0, &sn, 0)) {
-                get_tacho_max_speed(sn, &max_speed);
-                set_tacho_stop_action_inx( sn, TACHO_COAST );
-                if(port == 66)
-                    set_tacho_speed_sp( sn, max_speed * 1/30); //set tacho speed to (2/3)*max_speed
-                else
-                    set_tacho_speed_sp(sn, - max_speed * 1/30);
-                get_sensor_value0(sn_compass, &value);
-                set_tacho_command_inx(sn, TACHO_RUN_FOREVER);
-                while(value - (angle  + init) != 0.0){
+        if( ev3_search_tacho_plugged_in(port_left, 0, &sn_left, 0) &&  ev3_search_tacho_plugged_in(port_right,0, &sn_right, 0 )) {
+            get_tacho_max_speed(sn_left, &max_speed_left);
+            get_tacho_max_speed(sn_left, &max_speed_right);
+
+            set_tacho_stop_action_inx( sn_left, TACHO_COAST );
+            set_tacho_stop_action_inx( sn_right, TACHO_COAST );
+
+            if(max_speed_left == max_speed_right || max_speed_left < max_speed_right)  /* Set max_speed to the lowest max_speed (left or right) */
+                max_speed = max_speed_left;
+            else
+                max_speed = max_speed_right;
+
+            /* Set tacho speed to (1/30) * max_speed */
+            set_tacho_speed_sp( sn_left, max_speed * 1/30);
+            set_tacho_speed_sp( sn_right, (- max_speed * 1/30));
+
+            /* Get sensor compass value */
+            get_sensor_value0(sn_compass, &value);
+
+            /* Run the tachos */
+            set_tacho_command_inx(sn_left, TACHO_RUN_FOREVER);
+            set_tacho_command_inx(sn_right, TACHO_RUN_FOREVER);
+
+            while(((int)value - ((int)angle  + (int)init)) % 360 != 0.0){
                     get_sensor_value0(sn_compass, &value);
                     printf("Value - (angle + init ) = %f \n ", value - (angle + init));
                 }
-                set_tacho_command_inx( sn, TACHO_STOP);
-            }
-            else {
-                printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", 67);
-            }
-        }
 
-    }
-    else {
-        if( ev3_search_tacho_plugged_in(66, 0, &sn, 0)) {
-            get_tacho_max_speed(sn, &max_speed);
-            set_tacho_stop_action_inx( sn, TACHO_COAST );
-            set_tacho_speed_sp( sn, max_speed * 2/3); //set tacho speed to (2/3)*max_speed
-            set_tacho_time_sp( sn, 2000 ); //Tacho will run or t sec
-            set_tacho_command_inx( sn, TACHO_RUN_TIMED );
+            set_tacho_command_inx( sn_left, TACHO_STOP);
+            set_tacho_command_inx( sn_right, TACHO_STOP);
         }
         else {
-            printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", 66);
+           printf( "LEGO_EV3_M_MOTOR NOT found\n");
+        }
+    }
+
+    else {
+        if( ev3_search_tacho_plugged_in(port_left, 0, &sn_left, 0) &&  ev3_search_tacho_plugged_in(port_right,0, &sn_right, 0 )) {
+            get_tacho_max_speed(sn_left, &max_speed_left);
+            get_tacho_max_speed(sn_left, &max_speed_right);
+
+            set_tacho_stop_action_inx( sn_left, TACHO_COAST );
+            set_tacho_stop_action_inx( sn_right, TACHO_COAST );
+
+            if(max_speed_left == max_speed_right || max_speed_left < max_speed_right)  /* Set max_speed to the lowest max_speed (left or right) */
+                max_speed = max_speed_left;
+            else
+                max_speed = max_speed_right;
+
+            /* Set tacho speed to (1/30) * max_speed */
+            set_tacho_speed_sp( sn_left, (- max_speed * 1/30));
+            set_tacho_speed_sp( sn_right, ( max_speed * 1/30));
+
+            /* Get sensor compass value */
+            get_sensor_value0(sn_compass, &value);
+
+            /* Run the tachos */
+            set_tacho_command_inx(sn_left, TACHO_RUN_FOREVER);
+            set_tacho_command_inx(sn_right, TACHO_RUN_FOREVER);
+
+            while(((int)init - ((int)value  - (int)angle)) % 360 != 0.0){
+                    get_sensor_value0(sn_compass, &value);
+                    printf("Value - (angle + init ) = %f \n ", value - (angle + init));
+                }
+
+            set_tacho_command_inx( sn_left, TACHO_STOP);
+            set_tacho_command_inx( sn_right, TACHO_STOP);
+        }
+
+        else {
+            printf( "LEGO_EV3_M_MOTOR NOT found\n");
         }
     }
 }
 
-void move_forward(int dist){ //Makes the robot move forward for dist cm
-    uint8_t sn;
-    int port;
-    float t; //t in sec
+void move_forward(int dist){ //Makes the robot move forward for dist cm (if dist is neg, move back)
+    uint8_t sn_left, sn_right;
+    int port_left = 66; /* Left wheel */
+    int port_right = 67; /* Right wheel */
+    int max_speed, max_speed_left, max_speed_right, count_per_rot;
+    float t=0; //t in sec
 
-    for (port=66; port<68; port++){
-        if ( ev3_search_tacho_plugged_in(port,0, &sn, 0 )) {
-            int max_speed, count_per_rot;
-            get_tacho_count_per_rot(sn, &count_per_rot);
-            get_tacho_max_speed( sn, &max_speed );
-            printf("  count per rot = %d\n", count_per_rot);
-            printf("  max speed = %d\n", max_speed );
-            set_tacho_stop_action_inx( sn, TACHO_COAST );
-            set_tacho_speed_sp( sn, max_speed * 2/3); //set tacho speed to (2/3)*max_speed
-            t = (float) (count_per_rot * dist )/(max_speed * 2/3 * PI * WHEEL_DIAM) ;
-            printf("Tacho will run for %f seconds \n", t);
-            set_tacho_time_sp( sn, t*1000 ); //Tacho will run or t sec
-            if(port == 66) {
-                Sleep(100);
-                set_tacho_command_inx( sn, TACHO_RUN_TIMED );
-            }
-            else {
-                float t_left; // = t + 150 ms because otherwise turns too much
-                t_left = (t*1000) + 150;
-                set_tacho_time_sp(sn, t_left);
-                set_tacho_command_inx( sn, TACHO_RUN_TIMED );
-           }
+    if ( ev3_search_tacho_plugged_in(port_left,0, &sn_left, 0 ) &&  ev3_search_tacho_plugged_in(port_right,0, &sn_right, 0 )) {
+        /* Get max_speed and get count_per_rot */
+        get_tacho_count_per_rot(sn_left, &count_per_rot);
+        get_tacho_max_speed( sn_left, &max_speed_left);
+        get_tacho_max_speed( sn_right, &max_speed_right);
 
-        } else {
-            printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", (port-64));
-            t = 0;
+        set_tacho_stop_action_inx( sn_left, TACHO_COAST );
+        set_tacho_stop_action_inx( sn_right, TACHO_COAST );
+
+        if(max_speed_left == max_speed_right || max_speed_left < max_speed_right) /* Set max_speed to the lowest max_speed (left or right) */
+            max_speed = max_speed_left;
+        else
+            max_speed = max_speed_right;
+
+        /* Set tacho speed to (1/3) * max_speed */
+        if(dist > 0) {
+            set_tacho_speed_sp( sn_left, max_speed * 1/3);
+            set_tacho_speed_sp( sn_right, max_speed * 1/3);
         }
+        else {
+            set_tacho_speed_sp( sn_left, - max_speed * 1/3);
+            set_tacho_speed_sp( sn_right, - max_speed * 1/3);
+        }
+
+        /* Calculate time the tacho will run */
+        t = (float) (count_per_rot * dist )/(max_speed * 1/3 * PI * WHEEL_DIAM) ;
+        printf("Tacho will run for %f seconds \n", t);
+
+        /* Set tachos to run for t seconds */
+        set_tacho_time_sp( sn_left, t*1000 );
+        set_tacho_time_sp( sn_right, t*1000 );
+        set_tacho_command_inx( sn_left, TACHO_RUN_TIMED );
+        set_tacho_command_inx( sn_right, TACHO_RUN_TIMED );
+
+    } else {
+        printf( "LEGO_EV3_M_MOTOR NOT found\n");
     }
+
     /* Waiting for the tacho to stop */
     Sleep( t*1000 );
 }
+
 
 int init_robot( void ) // Find the tachos
 {
@@ -113,13 +232,6 @@ int init_robot( void ) // Find the tachos
     if(ev3_tacho_init() == -1)
        return 1;
 
-#ifndef __ARM_ARCH_4T__
-    printf( "The EV3 brick auto-detection is DISABLED,\nwaiting %s online with plugged tacho...\n", ev3_brick_addr );
-
-#else
-    printf( "Waiting tacho is plugged...\n" );
-
-#endif
     while ( ev3_tacho_init() < 1 ) Sleep( 1000 );
 
     printf( "Found tacho motors:\n" );
@@ -138,8 +250,6 @@ int init_robot( void ) // Find the tachos
       if ( !get_sensor_value0(sn_compass, &init_value_compass )) {
         init_value_compass = 0;
       }
-      printf( "\r(%f) \n", init_value_compass);
-      fflush( stdout );
     }
 
     return(0);
@@ -155,9 +265,20 @@ int exit_robot(void){ //Exit the ev3
 
 
 int main(){
-    init_robot();
-//    move_forward(20);
-    turn(90);
-    exit_robot();
-    return 1;
+    int is_init;
+    is_init = init_robot();
+
+    if(is_init == -1)
+        return -1;
+
+    shoot_from_stage1();
+    Sleep(10000);
+    shoot_from_stage2();
+    Sleep(10000);
+    shoot_from_stage3();
+    Sleep(10000);
+    shoot_from_stage4();
+    Sleep(10000);
+    shoot_from_stage5();
+    return 0;
 }
