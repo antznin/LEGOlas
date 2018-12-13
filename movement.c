@@ -21,20 +21,65 @@ float init_value_compass;
 void move_forward(int dist);
 void turn(float angle);
 void go_to_corner(int to_right); // Go to right corner if to_right = 1, otherwise go to left corner
+void shoot_from_stage1();
+void shoot_from_stage2();
+void shoot_from_stage3();
+void shoot_from_stage4();
+void shoot_from_stage5();
+
+/******************************* SHOOT FROM STAGE FUNCTIONS **************************************/
+/*************** The robot will scan the field from 5 different stages, **************************/
+/************ and if he has found the ball he has to go to the shoot position ********************/
+/*************************************************************************************************/
+
+/* Go to shoot position from stage 1 */
+void shoot_from_stage1(){
+    turn(-30);
+    move_forward(-20);
+    turn(30);
+}
+
+/* Go to shoot position from stage 2 */
+void shoot_from_stage2(){
+    turn(-60);
+    move_forward(60);
+    turn(-120);
+}
+
+/* Go to shoot position from stage 3 */
+void shoot_from_stage3(){
+    turn(-30);
+    move_forward(60);
+    turn(-60);
+}
+
+/* Go to shoot position from stage 4 */
+void shoot_from_stage4(){
+    turn(-45);
+    move_forward(50);
+    turn(45);
+}
+
+/* Go to shoot position from stage 5 */
+void shoot_from_stage5(){
+    turn(-60);
+    move_forward(50);
+    turn(-30);
+}
 
 
 /* Go to left corner from its beginning position */
 void go_to_corner(int to_right){
-    move_forward(70); /* Move to the wall */
+    move_forward(53); /* Move to the wall */
 
     if(to_right) {
         turn(90);
-        move_forward(50);
+        move_forward(40);
         turn(90);
     }
     else {
         turn(-90);
-        move_forward(50);
+        move_forward(40);
         turn(-90);
     }
 }
@@ -225,6 +270,15 @@ int main(){
 
     if(is_init == -1)
         return -1;
-    go_to_corner(1);
+
+    shoot_from_stage1();
+    Sleep(10000);
+    shoot_from_stage2();
+    Sleep(10000);
+    shoot_from_stage3();
+    Sleep(10000);
+    shoot_from_stage4();
+    Sleep(10000);
+    shoot_from_stage5();
     return 0;
 }
