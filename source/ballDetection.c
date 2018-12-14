@@ -29,23 +29,12 @@ struct values scan(float angle, float radius) {
 	int max_speed;
 	float initial_angle, initial_dist;
 	struct values myvalues;
+	int sign;
 
-	while ( ev3_tacho_init() < 1 ) Sleep( 1000 ); // robot tachos init
-	ev3_sensor_init(); // robot sensors init
-
-	if (ev3_search_sensor(LEGO_EV3_GYRO, &sncompass, 0)){
-		printf("[v] Compass sensor found.\n");
-		get_sensor_value0(sncompass, &initial_angle ); // compass sensor
+	if (angle > 0) {
+		sign = 1;
 	} else {
-		printf("[x] Compass sensor not found.\n");
-	}
-
-	if (ev3_search_sensor(LEGO_EV3_US, &snsonar, 0)){
-		printf("[v] Sonar sensor found.\n");
-		get_sensor_value0(snsonar, &initial_dist ); // sonar sensor
-      		//fflush( stdout );
-	} else {
-		printf("[x] Sonar sensor not found\n");
+		sign = -1;
 	}
 
 	// int bool_tacho1, bool_tacho2;
@@ -60,8 +49,8 @@ struct values scan(float angle, float radius) {
 		set_tacho_stop_action_inx( sn1, TACHO_COAST );
 		set_tacho_stop_action_inx( sn2, TACHO_COAST );
 
-		set_tacho_speed_sp( sn1, max_speed * 1/40 ); // set the tachos speed
-		set_tacho_speed_sp( sn2,-max_speed * 1/40 );
+		set_tacho_speed_sp( sn1, max_speed * 1/40 * sign ); // set the tachos speed
+		set_tacho_speed_sp( sn2,-max_speed * 1/40 * sign );
 
 		//set_tacho_ramp_up_sp( sn1,0 );
 		//set_tacho_ramp_down_sp( sn1,0 );
