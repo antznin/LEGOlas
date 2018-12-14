@@ -3,29 +3,24 @@
 /*************    Written by Yasmine Bennani   *************/
 /***********************************************************/
 
+#include "dead_reckoning.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
+#include "ev3.h"
+#include "ev3_port.h"
+#include "ev3_tacho.h"
 #include "ev3_sensor.h"
 
-
 #define FIELD_WIDTH 1.20 //Width of the field in meter
+
 #define FIELD_LENGTH 1.0 //Length of the field
 
 #define PI 3.14159
 
-
-struct position
-{
-  float x;        // in meter
-  float y;        // in meter
-  float theta;    // in radian (counterclockwise from x-axis)
-};
-
-
 struct position current_position;
-
 
 void init_pos()
 {
