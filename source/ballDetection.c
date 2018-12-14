@@ -3,41 +3,20 @@
 /*************************         Written by Antonin Godard         *******************************/
 /***************************************************************************************************/
 
+#include "ballDetection.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <math.h>
 #include "ev3.h"
 #include "ev3_port.h"
 #include "ev3_tacho.h"
 #include "ev3_sensor.h"
+
 #define Sleep( msec ) usleep(( msec ) * 1000 )
-#define MAX_DISTANCE 500.0
 
-float scan(float angle, float radius);
-
-int main(void) {
-
-	float value;
-	
-	value = scan(90, 500);
-	
-	printf("Angle : %f\n", value);
-
-	//while(true) {
-	//	if (ev3_search_sensor(LEGO_EV3_US, &sn_sonar,0)){
-     	//		printf("SONAR found, reading sonar...\n");
-     	//		if ( !get_sensor_value0(sn_sonar, &value )) {
-     	//			value = 0;
-	//		}
-     	//		printf( "\r(%f) \n", value);
-     	//		fflush( stdout );
-	//		Sleep(200);
-	//	}
-	//}
-}
-
-float scan(float angle, float radius) {
+struct values scan(float angle, float radius) {
 	/*
 	 * This functions makes the robot turn on it self until it detects the ball.
 	 * It returns the angle and makes the robot turn back to its initial position.
@@ -49,6 +28,7 @@ float scan(float angle, float radius) {
 	port1 = 66; port2 = 67; // left motor, right motor
 	int max_speed;
 	float initial_angle, initial_dist;
+	struct values myvalues;
 
 	while ( ev3_tacho_init() < 1 ) Sleep( 1000 ); // robot tachos init
 	ev3_sensor_init(); // robot sensors init
@@ -111,8 +91,10 @@ float scan(float angle, float radius) {
 		set_tacho_command_inx( sn1, TACHO_STOP );
 		set_tacho_command_inx( sn2, TACHO_STOP );
 
-		return abs(compass_value - (angle + initial_angle));
+		myvalues.angle = compass_value - (angle + initial_angle);
+		myvalues.radius = round(sonar_value * 0.1);
 
+		return myvalues;
 	} else {
 		printf("[x] Tachos not found.");
 		// if (!bool_tacho1) {
@@ -123,5 +105,7 @@ float scan(float angle, float radius) {
 		// 	printf("[x] Tacho %d and %d not found.\n",port1 - 64,  port2 - 64);
 		// }
 	}
-	return 0.0;
+	myvalues.angle = 0.0;
+	myvalues.radius = 0.0;
+	return myvalues;
 }

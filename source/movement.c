@@ -1,31 +1,24 @@
-
 /***************************************************************************************************/
 /*************************         TACHOS MOVEMENTS FUNCTIONS         ******************************/
 /*************************         Written by Yasmine Bennani         ******************************/
 /***************************************************************************************************/
 
+#include "movement.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-#include "/src/ev3dev-c/source/ev3/ev3.h"
-#include "/src/ev3dev-c/source/ev3/ev3_port.h"
-#include "/src/ev3dev-c/source/ev3/ev3_tacho.h"
-#include "/src/ev3dev-c/source/ev3/ev3_sensor.h"
 #include <unistd.h>
 #include <math.h>
+#include "ev3.h"
+#include "ev3_port.h"
+#include "ev3_tacho.h"
+#include "ev3_sensor.h"
 
 #define Sleep( msec ) usleep(( msec ) * 1000 )
-#define PI 3.1415
-#define WHEEL_DIAM 5.5 //Wheels' diameter is 5.5 cm
 
-float init_value_compass;
-void move_forward(int dist);
-void turn(float angle);
-void go_to_corner(int to_right); // Go to right corner if to_right = 1, otherwise go to left corner
-void shoot_from_stage1();
-void shoot_from_stage2();
-void shoot_from_stage3();
-void shoot_from_stage4();
-void shoot_from_stage5();
+#define PI 3.1415
+
+#define WHEEL_DIAM 5.5 //Wheels' diameter is 5.5 cm
 
 /******************************* SHOOT FROM STAGE FUNCTIONS **************************************/
 /*************** The robot will scan the field from 5 different stages, **************************/
@@ -259,26 +252,4 @@ int exit_robot(void){ //Exit the ev3
     ev3_uninit();
     printf( "*** ( EV3 ) Bye! ***\n" );
     return ( 0 );
-}
-
-
-
-
-int main(){
-    int is_init;
-    is_init = init_robot();
-
-    if(is_init == -1)
-        return -1;
-
-    shoot_from_stage1();
-    Sleep(10000);
-    shoot_from_stage2();
-    Sleep(10000);
-    shoot_from_stage3();
-    Sleep(10000);
-    shoot_from_stage4();
-    Sleep(10000);
-    shoot_from_stage5();
-    return 0;
 }
