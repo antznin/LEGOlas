@@ -12,6 +12,7 @@
 #include "/src/ev3dev-c/source/ev3/ev3_sensor.h"
 #include <unistd.h>
 #include <math.h>
+#include "ballDetection.h"
 
 #define Sleep( msec ) usleep(( msec ) * 1000 )
 #define PI 3.1415
@@ -26,6 +27,7 @@ void shoot_from_stage2();
 void shoot_from_stage3();
 void shoot_from_stage4();
 void shoot_from_stage5();
+
 
 /******************************* SHOOT FROM STAGE FUNCTIONS **************************************/
 /*************** The robot will scan the field from 5 different stages, **************************/
