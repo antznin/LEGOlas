@@ -29,12 +29,28 @@ struct values scan(float angle, float radius) {
 	int max_speed;
 	float initial_angle, initial_dist;
 	struct values myvalues;
-	int sign;
+	float sign;
+	int found;
 
-	if (angle > 0) {
-		sign = 1;
+	if (angle > 0.0) {
+		sign = 1.0;
 	} else {
-		sign = -1;
+		sign = -1.0;
+	}
+
+	if (ev3_search_sensor(LEGO_EV3_GYRO, &sncompass, 0)){
+		printf("[v] Compass sensor in scan found.\n");
+		get_sensor_value0(sncompass, &initial_angle ); // compass sensor
+	} else {
+		printf("[x] Compass sensor in scan not found.\n");
+	}
+
+	if (ev3_search_sensor(LEGO_EV3_US, &snsonar, 0)){
+		printf("[v] Sonar sensor in scan found.\n");
+		get_sensor_value0(snsonar, &initial_dist ); // sonar sensor
+      		//fflush( stdout );
+	} else {
+		printf("[x] Sonar sensor in scan not found\n");
 	}
 
 	// int bool_tacho1, bool_tacho2;
@@ -49,8 +65,8 @@ struct values scan(float angle, float radius) {
 		set_tacho_stop_action_inx( sn1, TACHO_COAST );
 		set_tacho_stop_action_inx( sn2, TACHO_COAST );
 
-		set_tacho_speed_sp( sn1, max_speed * 1/40 * sign ); // set the tachos speed
-		set_tacho_speed_sp( sn2,-max_speed * 1/40 * sign );
+		set_tacho_speed_sp( sn1, max_speed * 1/50 * sign ); // set the tachos speed
+		set_tacho_speed_sp( sn2,-max_speed * 1/50 * sign );
 
 		//set_tacho_ramp_up_sp( sn1,0 );
 		//set_tacho_ramp_down_sp( sn1,0 );
@@ -68,11 +84,12 @@ struct values scan(float angle, float radius) {
             	set_tacho_command_inx(sn2, TACHO_RUN_FOREVER);
 
 		//while (abs(sonar_value - prev_sonar_value) < 50) {
-		while (((int)compass_value - ((int)angle  + (int)initial_angle)) % 360 != 0
-				&& sonar_value > radius) {
+		while (((int)sign * (int)compass_value - ((int)angle  + (int)initial_angle)) % 360 != 0
+				&& sonar_value > radius * 10) {
 			get_sensor_value0(snsonar, &sonar_value);
-			printf("Distance : /%f/\n", sonar_value);
-			printf("Value - (angle + init ) = %f \n ", compass_value - (angle + initial_angle));
+			get_sensor_value0(sncompass, &compass_value);
+			// printf("Distance : /%f/\n", sonar_value);
+			// printf("Value - (angle + init ) = %d \n ", ((int)sign * (int)compass_value - ((int)angle  + (int)initial_angle)) % 360);
 			//set_tacho_command_inx( sn1, TACHO_RUN_TIMED );
 			//set_tacho_command_inx( sn2, TACHO_RUN_TIMED );
 		}
@@ -80,9 +97,17 @@ struct values scan(float angle, float radius) {
 		set_tacho_command_inx( sn1, TACHO_STOP );
 		set_tacho_command_inx( sn2, TACHO_STOP );
 
-		myvalues.angle = compass_value - (angle + initial_angle);
-		myvalues.radius = round(sonar_value * 0.1);
+		found = (((int)sign * (int)compass_value - ((int)angle  + (int)initial_angle)) % 360) != 0;
 
+		if (found) {
+			myvalues.angle = (float)(((int)sign * (int)compass_value - (int)initial_angle) % 360);
+			printf("[v] Ball found at angle %f !\n", myvalues.angle);
+			myvalues.radius = round(sonar_value * 0.1);
+		} else {
+			printf("[x] Ball not found.\n");
+			myvalues.angle =0.0;
+			myvalues.radius = 0.0;
+		}
 		return myvalues;
 	} else {
 		printf("[x] Tachos not found.");
