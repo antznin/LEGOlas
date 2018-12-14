@@ -15,9 +15,7 @@
 #include "ev3_sensor.h"
 
 #define Sleep( msec ) usleep(( msec ) * 1000 )
-
 #define PI 3.1415
-
 #define WHEEL_DIAM 5.5 //Wheels' diameter is 5.5 cm
 
 
@@ -219,9 +217,10 @@ void move_forward(int dist){ //Makes the robot move forward for dist cm (if dist
 
 int init_robot( void ) // Find the tachos
 {
-    uint8_t sn_compass;
+    uint8_t sn_compass, sn_sonar;
     int i;
     char s[256];
+    float init_value_sonar;
 
     if(ev3_tacho_init() == -1)
        return 1;
@@ -240,11 +239,13 @@ int init_robot( void ) // Find the tachos
     //Run all sensors
     ev3_sensor_init();
     if (ev3_search_sensor(LEGO_EV3_GYRO, &sn_compass,0)){
-      printf("COMPASS found, reading compass...\n");
-      if ( !get_sensor_value0(sn_compass, &init_value_compass )) {
-        init_value_compass = 0;
-      }
+        printf("COMPASS found, reading compass...\n");
+        }
+    if (ev3_search_sensor(LEGO_EV3_US, &sn_sonar, 0)){
+	printf("Sonar sensor found.\n");
     }
+
+
 
     return(0);
 }
