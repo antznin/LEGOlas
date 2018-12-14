@@ -23,18 +23,33 @@
 # The main executable will be located in the same directory as you ran 
 # "Make" from. To add new .c files, simply add them to the OBJS variable.
 
-CC 			= arm-linux-gnueabi-gcc
+CC 		= arm-linux-gnueabi-gcc
 CFLAGS 		= -O2 -g -std=gnu99 -W -Wall -Wno-comment
-INCLUDES 	= -I./ev3dev-c/source/ev3
+INCLUDES 	= -I./ev3dev-c/source/ev3 -I./include/
 LDFLAGS 	= -L./libraries -lrt -lm -lev3dev-c -lpthread -lbluetooth
 BUILD_DIR 	= ./build
 SOURCE_DIR 	= ./source
 
-ballDetection:
-	export LD_LIBRARY_PATH=~/ev3dev-c/lib
-	$(CC) $(INCLUDES) $(CFLAGS) -c ./ballDetection.c -o ballDetection.tmp
-	$(CC) ballDetection.tmp -Wall -L./libraries -lrt -lm -lev3dev-c -o ballDetection
+OBJS = \
+	$(BUILD_DIR)/ballDetection.o \
+	$(BUILD_DIR)/movement.o \
+	$(BUILD_DIR)/dead_reckoning.o \
+	$(BUILD_DIR)/main.o
+
+all: main
+
+main: ${OBJS}
+	$(CC) $(INCLUDES) $(CFLAGS) $(OBJS) $(LDFLAGS) -o main
+
+$(OBJS): $(BUILD_DIR)
+
+$(BUILD_DIR):
+	mkdir $(BUILD_DIR)
+
+$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
+	$(CC) -c $(SOURCE_DIR)/$*.c $(INCLUDES) -o $(BUILD_DIR)/$*.o
 
 clean:
-	rm -f ./ballDetection.tmp
-	rm -f ./ballDetection
+	rm -f $(BUILD_DIR)/*.o
+	rm ./main
+
