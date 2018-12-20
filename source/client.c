@@ -42,6 +42,10 @@ char score_str[58];
 pthread_mutex_t client_mutex;
 pthread_cond_t cond;
 
+/* The client thread routine.
+ * Checks for mutex and cond then proceeds to
+ * message sending.
+ */
 static void * client_thread_routine(void * data) {
 	
 	if (pthread_mutex_lock(&client_mutex) != 0) {
@@ -67,6 +71,10 @@ static void * client_thread_routine(void * data) {
 	close_bt();
 }
 
+/* Function to build the score message according
+ * to the given description on
+ * https://gitlab.eurecom.fr/ludovic.apvrille/OS_Robot_Project_Fall2018
+ */
 void build_score_msg() {
 	*((uint16_t *) score_str) = msgId++;
 	score_str[2] = TEAM_ID;
@@ -75,6 +83,11 @@ void build_score_msg() {
 	score_str[5] = score;
 }
 
+/* Function use by main thread to wake up
+ * the client thread and send a specified
+ * score.
+ * @param : score
+ */
 void send_score(int sent_score) {
 	score = sent_score;
 	/* Wakes up the client thread */
@@ -148,6 +161,8 @@ void connect_bt(pthread_t client_th) {
 	return;
 }
 
+/* Closes the bluetooth connection
+ */
 void close_bt(void) {
 	close (s);
 }
