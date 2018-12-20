@@ -7,9 +7,11 @@
 #include <math.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
+#include <pthread.h>
+#include "client.h"
 
-#define SERV_ADDR	"dc:53:60:ad:61:90"     /* Whatever the address of the server is */
-#define TEAM_ID 	1                       /* Your team ID */
+#define SERV_ADDR	"dc:53:60:ad:61:90"     /* Sami's MAC address */
+#define TEAM_ID 	1                       /* Team ID */
 
 #define MSG_ACK 	0
 #define MSG_START 	1
@@ -18,20 +20,87 @@
 #define MSG_SCORE 	4
 #define MSG_CUSTOM 	8
 
+#define SIG_SCORE3 	3
+#define SIG_SCORE1 	1
+
 #define Sleep( msec ) usleep(( msec ) * 1000 )
 
-int s;
+int s; // socket
 uint16_t msgId = 0;
 
-void send_score(int score) {
+/* score represents the score to be sent to the server */
+int score;
+
+/* end represent the state of the bluetooth connection 
+ *  - 1 means the connection is still running
+ *  - 0 means the connection must end, i.e. the robot 
+ *  	has finished his job */
+int end = 1;
+
+char score_str[58];
+
+pthread_mutex_t client_mutex;
+pthread_cond_t cond;
+
+static void * client_thread_routine(void * data) {
 	
+	if (pthread_mutex_lock(&client_mutex) != 0) {
+		fprintf(stderr, "Mutex lock error, exiting\n");
+		exit(EXIT_FAILURE);
+	}
+	
+	printf("Client is entering sleep mode...");
+
+	while (end != 0) {
+		if (pthread_cond_wait(&cond, &client_mutex) != 0) {
+			fprintf(stderr, "Cond wait error, exiting\n");
+			exit(EXIT_FAILURE);
+		}
+
+		build_score_msg();
+
+		printf("Wait over, sending score %d\nMessage id : %d",
+						score, msgId);
+		
+		write(s, &score_str, 6);
+	}
+	close_bt();
+}
+
+void build_score_msg() {
+	*((uint16_t *) score_str) = msgId++;
+	score_str[2] = TEAM_ID;
+	score_str[3] = 0xFF;
+	score_str[4] = MSG_SCORE;
+	score_str[5] = score;
+}
+
+void send_score(int sent_score) {
+	score = sent_score;
+	/* Wakes up the client thread */
+	pthread_cond_signal(&cond);
 }
 
 /* Credits to Matteo Bertolino 
  * https://gitlab.eurecom.fr/matteo.bertolino */
-void connect_bt(void) {
+static int read_from_server (int sock, char *buffer, size_t maxSize) {
+	int bytes_read = read (sock, buffer, maxSize);
+	if (bytes_read <= 0) {
+		fprintf (stderr, "Server unexpectedly closed connection...\n");
+		close (s);
+		exit (EXIT_FAILURE);
+	}
+	printf ("[DEBUG] received %d bytes\n", bytes_read);
+	return bytes_read;
+}
+
+/* Credits to Matteo Bertolino 
+ * https://gitlab.eurecom.fr/matteo.bertolino */
+void connect_bt(pthread_t client_th) {
 	struct sockaddr_rc addr = { 0 };
 	int status;
+	int thread_ret;
+	pthread_t client_thread = client_th;
 
 	/* allocate a socket */
 	s = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
@@ -52,6 +121,23 @@ void connect_bt(void) {
 		if (string[4] == MSG_START) {
 			printf ("Received start message!\n");
 		}
+
+		/* CLIENT THREAD INITIALIZATION */
+		if (pthread_mutex_init(&client_mutex, NULL) != 0) {
+			fprintf(stderr, "Client mutex init error, exiting\n");
+			exit(EXIT_FAILURE);
+		}
+		if (pthread_cond_init(&cond, NULL) != 0) {
+			fprintf(stderr, "Client cond init error, exiting\n");
+			exit(EXIT_FAILURE);
+		}
+		
+
+		if ( pthread_create(&client_thread, NULL,
+					client_thread_routine, NULL) != 0) {
+			fprintf(stderr, "Client thread init error, exiting\n");
+		}
+
 	} else {
 		fprintf (stderr, "Failed to connect to server...\n");
 		sleep (2);
@@ -59,7 +145,7 @@ void connect_bt(void) {
 	}
 	
 	close_bt();
-	return 0;
+	return;
 }
 
 void close_bt(void) {
