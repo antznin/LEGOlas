@@ -3,8 +3,10 @@
 # Edit at https://www.gitignore.io/?templates=c
 
 # EV3 related files
-
 ev3dev-c/
+
+# The main executable
+main
 
 ### C ###
 # Prerequisites
