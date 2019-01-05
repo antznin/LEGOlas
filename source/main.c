@@ -13,9 +13,10 @@
 #include "ev3_sensor.h"
 #include "movement.h"
 #include "ballDetection.h"
+#include "ballaunch.h"
 
 #define Sleep( msec ) usleep(( msec ) * 1000 )
-#define ARM_LENGTH 10 /* Length of the robot's arm that will catch the ball */
+#define ARM_LENGTH 8 /* Length of the robot's arm that will catch the ball */
 
 int total_scan(int angle, int radius, int step_id){
     struct values scan_values;
@@ -29,9 +30,29 @@ int total_scan(int angle, int radius, int step_id){
 
     scan_values = scan(angle, radius);
     if(scan_values.angle != 0.0 && scan_values.radius != 0.0){
-        ball_found = move_to_ball((int)scan_values.radius); //To be able to catch the ball the robot must be 5cm away from it
+        printf("HEY\n");
+        move_forward(-ARM_LENGTH);
+        Sleep(1000);
+        dismiss_hand_nc();
+        Sleep(3000);
+//        move_forward(ARM_LENGTH);
+//        Sleep(3000);
+        release_catapult();
+        Sleep(1000);
+        move_forward((int)(scan_values.radius - ARM_LENGTH));
+        Sleep(1000);
+        catch_ball();
+        Sleep(3000);
+//        move_forward(- (int)(scan_values.radius - ARM_LENGTH));
+//        turn(scan_values.angle);
+//        Sleep(1000);
+//        dismiss_hand_nc();
+//        Sleep(500);
+//        throw_ball();
+        /*ball_found = move_to_ball((int)(scan_values.radius - 5)); //To be able to catch the ball the robot must be 5cm away from it
         if(ball_found) {
-           // TO ADD : Sami's functions
+            catch_ball();
+            Sleep(2000);
             move_forward( - (int)(scan_values.radius - ARM_LENGTH));
             switch (step_id){
                 case 1: turn(-(sign * scan_values.angle));
@@ -46,7 +67,7 @@ int total_scan(int angle, int radius, int step_id){
             move_forward(-(int)(scan_values.radius + 5));
             turn(sign * (angle - scan_values.angle));
             return 0;
-        }
+        }*/
     }
     return 0;
 }
@@ -129,20 +150,11 @@ int main(){
         printf("Failed to init \n");
         return -1;
     }
+    hold_catapult_for_movement();
+    place_hand_for_movement();
+    Sleep(2000);
+    total_scan(180,35,1);
 
-    int ball_found = explore();
-    if(ball_found){
-        switch (ball_found){
-            case 1: shoot_from_stage1();
-            case 2: shoot_from_stage2();
-            case 3: shoot_from_stage3();
-            case 4: shoot_from_stage4();
-            case 5: shoot_from_stage5();
-        }
-    }
-    else{
-        printf("NO BALL FIND: EXITED \n");
-    }
     exit_robot();
 }
 

@@ -86,7 +86,7 @@ static void * get_sensor_values(void * initvalues) {
 		(*myvalues).radius = 0.0;	
 		
 	} else {
-		(*myvalues).angle = (float)val;
+		(*myvalues).angle = (float)((int)sign * ( (int)compass_value  - (int)initial_angle ) % 360);
 		(*myvalues).radius = round(sonar_value * 0.1);
 	}
 	pthread_exit ((void *)myvalues);
@@ -150,14 +150,22 @@ struct values scan(float angle, float radius) {
 			set_tacho_speed_sp( sn2,-max_speed * SPEED_FACTOR * sign );
 
 			while (found == 0) {
-				set_tacho_time_sp(sn1, 200);
-				set_tacho_time_sp(sn2, 200);
-				set_tacho_command_inx(sn1, TACHO_RUN_TIMED);
-				set_tacho_command_inx(sn2, TACHO_RUN_TIMED);
-				Sleep(400);
+				// set_tacho_time_sp(sn1, 200);
+				// set_tacho_time_sp(sn2, 200);
+				// set_tacho_command_inx(sn1, TACHO_RUN_TIMED);
+				// set_tacho_command_inx(sn2, TACHO_RUN_TIMED);
+				// Sleep(400);
+				set_tacho_command_inx(sn1, TACHO_RUN_FOREVER);
+				set_tacho_command_inx(sn2, TACHO_RUN_FOREVER);
 				printf("Found : %d\n", found);
 			}
 
+			set_tacho_command_inx( sn1, TACHO_STOP );
+			set_tacho_command_inx( sn2, TACHO_STOP );
+			set_tacho_time_sp(sn1, 800);
+			set_tacho_time_sp(sn2, 800);
+			set_tacho_command_inx(sn1, TACHO_RUN_TIMED);
+			set_tacho_command_inx(sn2, TACHO_RUN_TIMED);
 			set_tacho_command_inx( sn1, TACHO_STOP );
 			set_tacho_command_inx( sn2, TACHO_STOP );
 
