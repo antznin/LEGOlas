@@ -38,6 +38,9 @@ OBJS = \
 	$(BUILD_DIR)/dead_reckoning.o \
         $(BUILD_DIR)/ballaunch.o \
 	$(BUILD_DIR)/main.o
+	$(BUILD_DIR)/ballaunch.o \
+	$(BUILD_DIR)/main.o \
+	$(BUILD_DIR)/client.o
 
 all: main
 
