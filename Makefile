@@ -13,12 +13,14 @@
 #			messages.h
 #			movement.h
 #			sensors.h
+#                       ballaunch.h
 #	 	source/
 #			bt_client.c
 #			messages.c
 #			movement.c
 #			sensors.c
 #			main.c
+#                       ballaunch.c
 #
 # The main executable will be located in the same directory as you ran 
 # "Make" from. To add new .c files, simply add them to the OBJS variable.
@@ -34,6 +36,7 @@ OBJS = \
 	$(BUILD_DIR)/ballDetection.o \
 	$(BUILD_DIR)/movement.o \
 	$(BUILD_DIR)/dead_reckoning.o \
+        $(BUILD_DIR)/ballaunch.o \
 	$(BUILD_DIR)/main.o
 
 all: main
