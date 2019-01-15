@@ -10,7 +10,7 @@
 #include <pthread.h>
 #include "client.h"
 
-#define SERV_ADDR	"dc:53:60:ad:61:90"     /* Sami's MAC address */
+#define SERV_ADDR	"18:5e:0f:9d:7c:99"     /* Sami's MAC address */
 #define TEAM_ID 	1                       /* Team ID */
 
 #define MSG_ACK 	0
@@ -53,22 +53,25 @@ static void * client_thread_routine(void * data) {
 		exit(EXIT_FAILURE);
 	}
 	
-	printf("Client is entering sleep mode...");
+	printf("Client is entering sleep mode...\n");
 
 	while (end != 0) {
+		printf("Before waiting\n");
 		if (pthread_cond_wait(&cond, &client_mutex) != 0) {
 			fprintf(stderr, "Cond wait error, exiting\n");
 			exit(EXIT_FAILURE);
 		}
+		printf("Client has woken up\n");
+
 
 		build_score_msg();
 
-		printf("Wait over, sending score %d\nMessage id : %d",
+		printf("Wait over, sending score %d\nMessage id : %d\n",
 						score, msgId);
 		
-		write(s, &score_str, 6);
+		write(s, score_str, 6);
+		printf("Finished sending message\n");
 	}
-	close_bt();
 }
 
 /* Function to build the score message according
@@ -109,11 +112,11 @@ static int read_from_server (int sock, char *buffer, size_t maxSize) {
 
 /* Credits to Matteo Bertolino 
  * https://gitlab.eurecom.fr/matteo.bertolino */
-void connect_bt(pthread_t client_th) {
+void connect_bt() {
 	struct sockaddr_rc addr = { 0 };
 	int status;
 	int thread_ret;
-	pthread_t client_thread = client_th;
+	pthread_t client_thread;
 
 	/* allocate a socket */
 	s = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
@@ -156,13 +159,12 @@ void connect_bt(pthread_t client_th) {
 		sleep (2);
 		exit (EXIT_FAILURE);
 	}
-	
-	close_bt();
 	return;
 }
 
 /* Closes the bluetooth connection
  */
 void close_bt(void) {
+	end = 0;
 	close (s);
 }
