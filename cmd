@@ -8,4 +8,6 @@ docker run --rm -it -h ev3 -v /Users/yasminebennani/Google\ Drive/Cours/Eurecom/
 arm-linux-gnueabi-gcc -I./ev3dev-c/source/ev3 -O2 -std=gnu99 -W -Wall -Wno-comment -c movement.c -o movement.o
 arm-linux-gnueabi-gcc movement.o -Wall -L./libraries -lrt -lm -lev3dev-c -o movement
 
+arm-linux-gnueabi-gcc -I./ev3dev-c/source/ev3 -O2 -std=gnu99 -W -Wall -Wno-comment -c dead_reckoning.c -o dead_reckoning.o
+arm-linux-gnueabi-gcc dead_reckoning.o -Wall -L./libraries -lrt -lpthread -lm -lev3dev-c -o dead_reckoning
 
