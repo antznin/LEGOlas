@@ -38,6 +38,7 @@ struct values *tab_scan1;
  * @param {void *} initvalues : pointer on struct values (to be casted) passed
  * 	by the main thread
  */
+ 
 static void * get_sensor_values(void * initvalues) {
 
 	uint8_t snsonar, sncompass;
@@ -193,7 +194,7 @@ struct values partial_scan(float angle, float radius) {
 	return myvalues;
 }
 
-struct values * single_scan(int sleep_value) {
+struct values * single_scan(int sleep_value, int scan_id, float radius_value) {
 	/*
 	 * This functions makes the robot turn on it self until it detects the ball.
 	 * It returns the angle and makes the robot turn back to its initial position.
@@ -212,6 +213,14 @@ struct values * single_scan(int sleep_value) {
 	int max_speed;
 	struct values * myvalues; // values to be returned
 	myvalues = (struct values *)(malloc(5 * sizeof(struct values)));
+	
+	/* initialization of table values*/
+	
+	int iterator;
+	for (iterator = 0; iterator < 6; iterator++){
+		myvalues[iterator].radius = scan_id * 6000 + iterator*1000;
+		myvalues[iterator].angle = scan_id * 6000 + iterator*1000;
+	}
 	/* Initial values */
 	float initial_angle, initial_dist;
 
@@ -261,33 +270,33 @@ struct values * single_scan(int sleep_value) {
 		set_tacho_command_inx( sn2, TACHO_RUN_FOREVER );
 		int count = 0;
 		while ( fabs(initial_angle - compass_value) < 360.0 ) {
-				if (sonar_value < radius * 9.9 )
+				get_sensor_value0(snsonar, &sonar_value);
+				get_sensor_value0(sncompass, &compass_value);
+				printf("Angle in single_scan : %d\n", current_angle);
+				printf("Sonar value : %f\n", sonar_value);
+				if (sonar_value < radius_value * 9.9  && count < 6)
 				{
 						myvalues[count].radius = sonar_value;
 						myvalues[count].angle = current_angle;
 						count++;
 						Sleep(sleep_value);
 				}
-				get_sensor_value0(snsonar, &sonar_value);
-				get_sensor_value0(sncompass, &compass_value);
-				printf("Angle in single_scan : %d\n", current_angle);
-				printf("Sonar value : %f\n", sonar_value);
 		}
 
 		set_tacho_command_inx( sn1, TACHO_STOP );
 		set_tacho_command_inx( sn2, TACHO_STOP );
 
 		/* Retrieving values returned by pthread_cancel */
-		void * tmp_finalvalues;
+		/*void * tmp_finalvalues;
 		pthread_join (sensorvalues_thread, &tmp_finalvalues);
-		struct values *finalvalues = (struct values *)tmp_finalvalues;
+		struct values *finalvalues = (struct values *)tmp_finalvalues;*/
 
 		/* Returning values */
-		myvalues.angle = (*finalvalues).angle;
-		myvalues.radius = (*finalvalues).radius;
-
+		/*myvalues.angle = (*finalvalues).angle;
+		myvalues.radius = (*finalvalues).radius;*/
+		/*
 		printf("Scan return angle : %f\n", myvalues.angle);
-		printf("Scan returned radius : %f\n", myvalues.radius);
+		printf("Scan returned radius : %f\n", myvalues.radius);*/
 
 		return myvalues;
 	} else {
@@ -296,3 +305,12 @@ struct values * single_scan(int sleep_value) {
 
 	return myvalues;
 }
+
+int are_close(struct values coordinates_1, struct values coordinates_2){
+	if (fabs(coordinates_1.radius - coordinates_2.radius) < 20 && fabs(coordinates_1.angle - coordinates_2.angle) < 15) {
+		return 1;
+	}
+	else return 0;
+}
+
+
