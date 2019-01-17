@@ -43,7 +43,7 @@ pthread_mutex_t client_mutex;
 pthread_cond_t cond;
 
 /* The client thread routine.
- * Checks for mutex and cond then proceeds to
+ * Checks for mutex and condtion variable then proceeds to
  * message sending.
  */
 static void * client_thread_routine(void * data) {
@@ -63,7 +63,6 @@ static void * client_thread_routine(void * data) {
 		}
 		printf("Client has woken up\n");
 
-
 		build_score_msg();
 
 		printf("Wait over, sending score %d\nMessage id : %d\n",
@@ -74,8 +73,8 @@ static void * client_thread_routine(void * data) {
 	}
 }
 
-/* Function to build the score message according
- * to the given description on
+/* Function to build the score message with the 
+ * current score according to the given description on
  * https://gitlab.eurecom.fr/ludovic.apvrille/OS_Robot_Project_Fall2018
  */
 void build_score_msg() {
@@ -86,7 +85,7 @@ void build_score_msg() {
 	score_str[5] = score;
 }
 
-/* Function use by main thread to wake up
+/* Function used by main thread to wake up
  * the client thread and send a specified
  * score.
  * @param : score
