@@ -17,7 +17,7 @@
 #include "ev3_sensor.h"
 
 #define Sleep( msec ) usleep(( msec ) * 1000 )
-#define SPEED_FACTOR 1/15
+#define SPEED_FACTOR 1/20
 
 /* This variable is used to communicate between the main thread and
  * the sensor thread (used for permanently retrieving the sensor values)
@@ -194,7 +194,11 @@ struct values partial_scan(float angle, float radius) {
 	return myvalues;
 }
 
-struct values * single_scan(int sleep_value, int scan_id, float radius_value) {
+struct values single_scan(int sleep_value, 
+		int scan_id, 
+		float radius_value, 
+		int sign, 
+		float ignore_angle) {
 	/*
 	 * This functions makes the robot turn on it self until it detects the ball.
 	 * It returns the angle and makes the robot turn back to its initial position.
@@ -207,21 +211,26 @@ struct values * single_scan(int sleep_value, int scan_id, float radius_value) {
 	 * @return {struct values} myvalues : structure composed of an angle and a radius
 	 */
 
-	uint8_t sn1, sn2;
+	uint8_t sn1, sn2, sncompass, snsonar;
 	int port1, port2;
 	port1 = 66; port2 = 67; // left motor, right motor
 	int max_speed;
-	struct values * myvalues; // values to be returned
-	myvalues = (struct values *)(malloc(5 * sizeof(struct values)));
+	struct values myvalues; // values to be returned
+	// myvalues = (struct values *)(malloc(5 * sizeof(struct values)));
 	
 	/* initialization of table values*/
 	
-	int iterator;
-	for (iterator = 0; iterator < 6; iterator++){
-		myvalues[iterator].radius = scan_id * 6000 + iterator*1000;
-		myvalues[iterator].angle = scan_id * 6000 + iterator*1000;
-	}
+	// int iterator;
+	// for (iterator = 0; iterator < 6; iterator++){
+	// 	myvalues[iterator].radius = scan_id * 6000 + iterator*1000;
+	// 	myvalues[iterator].angle = scan_id * 6000 + iterator*1000;
+	// }
 	/* Initial values */
+
+	// Initial large values
+	myvalues.angle = scan_id * 6000;
+	myvalues.radius = scan_id * 6000;
+
 	float initial_angle, initial_dist;
 
 	/* Looking for the sensor and storing initial values */
@@ -237,21 +246,13 @@ struct values * single_scan(int sleep_value, int scan_id, float radius_value) {
 		fprintf(stderr, "Sonar sensor in scan not found\n");
 	}
 
-	/* Sign used for the while condition below. Takes account of the
-	 * sign of the angle. */
-	float sign;
-	if (angle > 0.0) {
-		sign = 1.0;
-	} else {
-		sign = -1.0;
-	}
-
 	/* Initialize sensor values */
 	float sonar_value;
 	get_sensor_value0(snsonar, &sonar_value);
 	float compass_value;
 	get_sensor_value0(sncompass, &compass_value);
 	float current_angle = compass_value - initial_angle;
+	int found = 0;
 	/* Robot motion functions */
 	if ( ev3_search_tacho_plugged_in(port1,0, &sn1, 0 )
 			&& ev3_search_tacho_plugged_in(port2,0, &sn2, 0 )) {
@@ -263,40 +264,35 @@ struct values * single_scan(int sleep_value, int scan_id, float radius_value) {
 		set_tacho_stop_action_inx( sn1, TACHO_COAST );
 		set_tacho_stop_action_inx( sn2, TACHO_COAST );
 
-		set_tacho_speed_sp( sn1, max_speed * SPEED_FACTOR * sign );
-		set_tacho_speed_sp( sn2,-max_speed * SPEED_FACTOR * sign );
+		set_tacho_speed_sp( sn1, sign * max_speed * SPEED_FACTOR );
+		set_tacho_speed_sp( sn2,-sign * max_speed * SPEED_FACTOR );
 
 		set_tacho_command_inx( sn1, TACHO_RUN_FOREVER );
 		set_tacho_command_inx( sn2, TACHO_RUN_FOREVER );
-		int count = 0;
+
+		printf("Ignore : %f\n", ignore_angle);
 		while ( fabs(initial_angle - compass_value) < 360.0 ) {
 				get_sensor_value0(snsonar, &sonar_value);
 				get_sensor_value0(sncompass, &compass_value);
-				printf("Angle in single_scan : %d\n", current_angle);
-				printf("Sonar value : %f\n", sonar_value);
-				if (sonar_value < radius_value * 9.9  && count < 6)
-				{
-						myvalues[count].radius = sonar_value;
-						myvalues[count].angle = current_angle;
-						count++;
-						Sleep(sleep_value);
+				current_angle = compass_value - initial_angle;
+				// printf("Angle in single_scan : %f\n", sign * current_angle);
+				// printf("Sonar value : %f\n", sonar_value);
+				if (sonar_value < radius_value * 10.5 
+						&& found == 0 
+						&& fabs(current_angle) > ( 360 - ignore_angle - 40)) 
+				{ 
+						// myvalues[count].radius = sonar_value;
+						// myvalues[count].angle = current_angle;
+						myvalues.angle = fmod(360.0 + current_angle, 360.0);
+						myvalues.radius = sonar_value;
+						printf("======== FOUND =======\nSonar : %f, Angle : %f\n======================\n",
+							sonar_value, fmod(360.0 + current_angle, 360.0));
+						found = 1;
 				}
 		}
 
 		set_tacho_command_inx( sn1, TACHO_STOP );
 		set_tacho_command_inx( sn2, TACHO_STOP );
-
-		/* Retrieving values returned by pthread_cancel */
-		/*void * tmp_finalvalues;
-		pthread_join (sensorvalues_thread, &tmp_finalvalues);
-		struct values *finalvalues = (struct values *)tmp_finalvalues;*/
-
-		/* Returning values */
-		/*myvalues.angle = (*finalvalues).angle;
-		myvalues.radius = (*finalvalues).radius;*/
-		/*
-		printf("Scan return angle : %f\n", myvalues.angle);
-		printf("Scan returned radius : %f\n", myvalues.radius);*/
 
 		return myvalues;
 	} else {
@@ -307,10 +303,56 @@ struct values * single_scan(int sleep_value, int scan_id, float radius_value) {
 }
 
 int are_close(struct values coordinates_1, struct values coordinates_2){
-	if (fabs(coordinates_1.radius - coordinates_2.radius) < 20 && fabs(coordinates_1.angle - coordinates_2.angle) < 15) {
+	if (fabs(coordinates_1.radius - coordinates_2.radius) < 20) {
 		return 1;
 	}
 	else return 0;
 }
 
 
+// float theoretical_radius(float angle){
+//     float radius;
+//     float maxY = 210;
+//     float maxX = 550;
+//     float minY = 670;
+//     float minX = 550;
+//     float reduced_angle = angle % 360;
+//     float quadrant;
+//     float radToDegCoef = 180/PI;
+//     float q1 = radToDegCoef*atan(abs(minX/maxY)) + 90;
+//     float q2 = 90;
+//     float q3 = q2 + radToDegCoef*atan(abs(minY/minX)) + 90;
+//     float q4 = 180;
+//     float q5 = q4 + radToDegCoef*atan(abs(maxX/minY)) + 90;
+//     float q6 = 270;
+//     float q7 = q6 + radToDegCoef*atan(abs(maxY/maxX)) + 90;
+//     float q8 = 359.99;
+// 
+//     switch(reduced_angle){
+//       case (reduced_angle >= 0 || reduced_angle <= q1 ):
+//         radius = abs(maxY/cos(reduced_angle));
+//         return radius;
+//       case (reduced_angle > q1 || reduced_angle <= q2 ):
+//         radius = abs(minX/sin(reduced_angle));
+//         return radius;
+//       case (reduced_angle > q2 || reduced_angle <= q3 ):
+//         radius = abs(minX/sin(reduced_angle));
+//         return radius;
+//       case (reduced_angle > q3 || reduced_angle <= q4 ):
+//         radius = abs(minY/cos(reduced_angle));
+//         return radius;
+//       case (reduced_angle > q4 || reduced_angle <= q5 ):
+//         radius = abs(minY/cos(reduced_angle));
+//         return radius;
+//       case (reduced_angle > q5 || reduced_angle <= q6 ):
+//         radius = abs(maxX/sin(reduced_angle));
+//         return radius;
+//       case (reduced_angle > q6 || reduced_angle <= q7 ):
+//         radius = abs(maxX/sin(reduced_angle));
+//         return radius;
+//       case (reduced_angle > q7 || reduced_angle <= q8 ):
+//         radius = abs(maxY/cos(reduced_angle));
+//         return radius;
+//     }
+// 
+//  }
