@@ -149,29 +149,31 @@ int move_to_ball(int dist){ /* dist is the distance returned by the scan functio
 }
 
 void curved_turn(float left_factor, float right_factor, int runtime) {
-	uint8_t sn_left, sn_right;
-	int max_speed;
-	int port_left = 66;
-	int port_right = 67;
+    uint8_t sn_left, sn_right;
+    int port_left = 66; 
+    int port_right = 67; 
+    int max_speed;
 
-	if( ev3_search_tacho_plugged_in(port_left, 0, &sn_left, 0) 
-			&&  ev3_search_tacho_plugged_in(port_right, 0, &sn_right, 0)) {
-		/* Getting the max speed */
-		get_tacho_max_speed(sn_left, &max_speed);
+    if( ev3_search_tacho_plugged_in(port_left, 0, &sn_left, 0) &&  ev3_search_tacho_plugged_in(port_right,0, &sn_right, 0 )) {
+        get_tacho_max_speed(sn_left, &max_speed);
+        printf("[DEBUG] max speed : %d\n",max_speed);
+        set_tacho_stop_action_inx(sn_left, TACHO_COAST);
+        set_tacho_stop_action_inx(sn_right, TACHO_COAST);
 
-		set_tacho_stop_action_inx(sn_left, TACHO_COAST);
-		set_tacho_stop_action_inx(sn_right, TACHO_COAST);
+        set_tacho_speed_sp(sn_left, max_speed * left_factor);
+        set_tacho_speed_sp(sn_right, max_speed * right_factor);
 
-		set_tacho_time_sp(sn_left, runtime);
-		set_tacho_time_sp(sn_right, runtime);
+        /* Set tachos to run for t seconds */
+        set_tacho_time_sp( sn_left,runtime);
+        set_tacho_time_sp( sn_right,runtime);
 
-		set_tacho_command_inx(sn_left, TACHO_RUN_TIMED);
-		set_tacho_command_inx(sn_right, TACHO_RUN_TIMED);
-		Sleep(runtime);
-				
-	} else {
-		fprintf(stderr, "Tachos not found.");
-	}
+        set_tacho_command_inx( sn_left, TACHO_RUN_TIMED );
+        set_tacho_command_inx( sn_right, TACHO_RUN_TIMED );
+	Sleep(runtime);
+    }
+    else
+       printf("[x] Tachos not found \n");
+
 }
 
 void turn(float angle) {
