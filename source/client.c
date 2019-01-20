@@ -31,11 +31,13 @@ uint16_t msgId = 0;
 /* score represents the score to be sent to the server */
 int score;
 
-/* end represent the state of the bluetooth connection 
+/* hasEnded represents the state of the bluetooth connection 
  *  - 1 means the connection is still running
  *  - 0 means the connection must end, i.e. the robot 
  *  	has finished his job */
-int end = 1;
+int hasEnded = 1;
+
+int hasStarted = 0;
 
 char score_str[58];
 
@@ -55,7 +57,7 @@ static void * client_thread_routine(void * data) {
 	
 	printf("Client is entering sleep mode...\n");
 
-	while (end != 0) {
+	while (hasEnded != 0) {
 		printf("Before waiting\n");
 		if (pthread_cond_wait(&cond, &client_mutex) != 0) {
 			fprintf(stderr, "Cond wait error, exiting\n");
@@ -63,7 +65,9 @@ static void * client_thread_routine(void * data) {
 		}
 		printf("Client has woken up\n");
 
-		build_score_msg();
+		if (hasEnded != 0) {
+			build_score_msg();
+		}
 
 		printf("Wait over, sending score %d\nMessage id : %d\n",
 						score, msgId);
@@ -71,6 +75,25 @@ static void * client_thread_routine(void * data) {
 		write(s, score_str, 6);
 		printf("Finished sending message\n");
 	}
+}
+
+
+static void * waiting_thread_routine(void * data) {
+
+	char string[58];
+
+	while (1) {
+		read_from_server (s, string, 9);
+		printf("Reading from server...\n");
+		if (string[4] == MSG_START) {
+			hasStarted = 1;
+		} else if (string[4] == MSG_STOP) {
+			hasEnded = 1;
+			break;
+		}
+		Sleep(10);
+	}
+	close_bt();
 }
 
 /* Function to build the score message with the 
@@ -116,6 +139,7 @@ void connect_bt() {
 	int status;
 	int thread_ret;
 	pthread_t client_thread;
+	pthread_t waiting_thread;
 
 	/* allocate a socket */
 	s = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
@@ -130,13 +154,6 @@ void connect_bt() {
 	
 	/* if connected */
 	if( status == 0 ) {
-		char string[58];
-		/* Wait for START message */
-		read_from_server (s, string, 9);
-		if (string[4] == MSG_START) {
-			printf ("Received start message!\n");
-		}
-
 		/* CLIENT THREAD INITIALIZATION */
 		if (pthread_mutex_init(&client_mutex, NULL) != 0) {
 			fprintf(stderr, "Client mutex init error, exiting\n");
@@ -146,11 +163,17 @@ void connect_bt() {
 			fprintf(stderr, "Client cond init error, exiting\n");
 			exit(EXIT_FAILURE);
 		}
-		
 
 		if ( pthread_create(&client_thread, NULL,
 					client_thread_routine, NULL) != 0) {
 			fprintf(stderr, "Client thread init error, exiting\n");
+			exit(EXIT_FAILURE);
+		}
+
+		if (pthread_create(&waiting_thread, NULL,
+					waiting_thread_routine, NULL) != 0) {
+			fprintf(stderr, "Client waiting thread init error, exiting\n");
+			exit(EXIT_FAILURE);
 		}
 
 	} else {
@@ -164,6 +187,7 @@ void connect_bt() {
 /* Closes the bluetooth connection
  */
 void close_bt(void) {
-	end = 0;
+	hasEnded = 0;
+	pthread_cond_signal(&cond);
 	close (s);
 }
