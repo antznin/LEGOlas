@@ -45,27 +45,17 @@ void rewrite_state(char * state){
     current_position.state = state;
 }
 
-void *dead_reckoning(void* unused)  //Thread, to know the position at any time
+/* Thread, to know the position and the orientation of the robot at any time */
+void *dead_reckoning(void* unused)
 {
-    uint8_t sn_right, sn_left, sn_compass;
+    uint8_t sn_right, sn_left;
     int speed_left, speed_right, sign_speed, count_per_rot;
     int port_left = 66;
     int port_right = 67;
-    float theta; //In radian
-    float value; //In degree, compass output
+    float theta;
     float dist;
     char * state = malloc(32*sizeof(char));
 
-    if (ev3_search_sensor(LEGO_EV3_GYRO, &sn_compass,0)){
-        printf("COMPASS found in DEAD_RECK, reading compass...\n");
-        if ( !get_sensor_value0(sn_compass, &value )) {
-            value = 0;
-        }
-    }
-    else {
-        printf( "COMPASS NOT in DEAD_RECK found\n");
-    }
-    
     if( ev3_search_tacho_plugged_in(port_left, 0, &sn_left, 0) &&  ev3_search_tacho_plugged_in(port_right,0, &sn_right, 0 )) {
         get_tacho_count_per_rot(sn_left, &count_per_rot); // Set count_per_rots
         while(1)
@@ -90,9 +80,8 @@ void *dead_reckoning(void* unused)  //Thread, to know the position at any time
                     sign_speed = speed_left / abs(speed_left);
                     theta = current_position.theta;
                     dist = (float)sign_speed * ((CLOCK_PER * (float)(speed_left) * PI * WHEEL_DIAM ) / (float)count_per_rot) ; // Distance runned in CLOCK_PER seconds
-                    printf("Distance parcourue: %f \n", dist);
-                    printf("theta: %f\n", theta);
                     
+                    /* Update current_position.x and current_position.y */
                     if(theta <= 90)
                     {
                         current_position.x += dist * cos((theta*PI)/180);
@@ -108,15 +97,15 @@ void *dead_reckoning(void* unused)  //Thread, to know the position at any time
                     }
                     else if(theta > 270){
                         current_position.x += dist * cos(2*PI - (theta*PI)/180);
-                        current_position.y -= dist * sin(2*PI - (theta*PI)/180);
+                        current_position.y += dist * sin(2*PI - (theta*PI)/180);
                     }
-                    printf("x: %f, y:%f \n", current_position.x, current_position.y);
+    
                     /* ****************************************** */
                     
-                    Sleep(CLOCK_PER * 500);
+                    Sleep(CLOCK_PER * 500); // Less than 1000 because otherwise it sleeps too much and the robot travels to much distance
                     get_tacho_speed(sn_left, &speed_left); // Get left_speed
                     get_tacho_speed(sn_right, &speed_right); // Get right_speed
-                    state = current_position.state;
+                    state = current_position.state; // Update state
                     
                     /* Check if the robot does not cross the limits of the field */
                     if(abs(current_position.x) > FIELD_WIDTH / 2 || abs(current_position.y) > FIELD_LENGTH / 2){
@@ -138,7 +127,7 @@ void *dead_reckoning(void* unused)  //Thread, to know the position at any time
 }
     
 
-void turn(float angle) {
+int turn(float angle) {
     uint8_t sn_left, sn_right, sn_compass;
     int max_speed_left, max_speed_right, max_speed;
     int port_left = 66; /* Left wheel */
@@ -147,6 +136,9 @@ void turn(float angle) {
     
     if (ev3_search_sensor(LEGO_EV3_GYRO, &sn_compass,0)){
         get_sensor_value0(sn_compass, &init );
+    }
+    else {
+        return 0;
     }
     
     if( ev3_search_tacho_plugged_in(port_left, 0, &sn_left, 0) &&  ev3_search_tacho_plugged_in(port_right,0, &sn_right, 0 ) && angle != 0) {
@@ -173,28 +165,31 @@ void turn(float angle) {
         set_tacho_command_inx(sn_left, TACHO_RUN_FOREVER);
         set_tacho_command_inx(sn_right, TACHO_RUN_FOREVER);
         
+        /* Turn until it has turned enough (i.e. until it has reached its goal */
         while(sign_angle * (float)(((int)value - ((int)angle  + (int)init)) % 360) != 0.0){
             get_sensor_value0(sn_compass, &value);
-            printf("Value - (angle + init ) = %f \n ", value - (angle + init));
         }
         
+        /* Stop the tachos and update current_position.theta */
         set_tacho_command_inx( sn_left, TACHO_STOP);
         set_tacho_command_inx( sn_right, TACHO_STOP);
         current_position.theta -= angle;
-        //current_position.theta = (float) ((int)current_position.theta % 360);
-        printf("Theta at the end of turn function: %f \n", current_position.theta);
+        current_position.theta = (float) ((int)current_position.theta % 360);
+        return 1;
     }
     else {
         printf( "Exit turn function (motor not found or angle = 0)\n");
+        return 0;
     }
 }
 
-
+/* Turn the robot so its orientation is the smae as its beginning, i.e. so that current_position.theta = 90 degrees */
 void init_orientation(){
     float angle = current_position.theta;
     turn(-(90-angle));
 }
 
+/* Move to the position with the coordinates x, y */
 int move_to_xy(float x, float y){
     uint8_t sn_right, sn_left;
     int port_left = 66;
@@ -207,7 +202,8 @@ int move_to_xy(float x, float y){
         get_tacho_max_speed( sn_left, &max_speed_left);
         get_tacho_max_speed( sn_right, &max_speed_right);
         
-        if(max_speed_left == max_speed_right || max_speed_left < max_speed_right) /* Set max_speed to the lowest max_speed (left or right) */
+        /* Set max_speed to the lowest max_speed (left or right) */
+        if(max_speed_left == max_speed_right || max_speed_left < max_speed_right)
             max_speed = max_speed_left;
         else
             max_speed = max_speed_right;
@@ -243,15 +239,15 @@ int move_to_xy(float x, float y){
         
         /* Turn to be in the right direction */
         angle = current_position.theta - 90; // The diff angle from the beginning direction
-        printf("Angle that need to be turned: %f \n", abs((180*theta)/PI)+angle);
+        printf("Angle that need to be turned: %f \n", round(((((180*theta)/PI)-angle)/10)*10));
         /* Need to turn the other way around under some conditions */
         if(angle > 180){
             angle = 180 - angle;
         }
         if(x0 < x)
-            turn(abs((180*theta)/PI)-angle);
+            turn(round((((180*theta)/PI)-angle)/10)*10);
         else
-            turn(-(abs((180*theta)/PI)-angle));
+            turn(-(round(((180*theta)/PI)-angle)/10)*10);
         
         /* Set tacho speed to (1/3) * max_speed */
         set_tacho_speed_sp( sn_left, max_speed * 1/4);
@@ -262,7 +258,6 @@ int move_to_xy(float x, float y){
         state = current_position.state;
         
         /* Move until the robot has reached his destination */
-        
         while((round(x0) < round(x)-1 || round(x0) > round(x)+1 || round(y0) < round(y)-1 || round(y0) > round(y)+1) && strcmp((const char *) "TACHO_STOP", (const char *) state) != 0)
         {
             printf("round(x0): %f, round(x): %f, round(y0): %f, round(y): %f \n", round(x0), round(x), round(y0), round(y));
@@ -271,6 +266,7 @@ int move_to_xy(float x, float y){
             state = current_position.state;
         }
         
+        /* Stop the tachos and update current_position.state */
         set_tacho_command_inx( sn_left, TACHO_STOP);
         set_tacho_command_inx( sn_right, TACHO_STOP);
         rewrite_state((char *)"TACHO_STOP");
@@ -329,6 +325,9 @@ int init_robot( void ) // Find the tachos
     return 0;
 }
 
+/****************************************************************/
+/*                      Main function                           */
+/****************************************************************/
 
 int main() {
     init_robot();
@@ -337,14 +336,17 @@ int main() {
     pthread_create(&reckoning_thread, NULL, dead_reckoning, NULL);
     
     move_to_xy(30,15);
+    move_to_xy(0,15);
     move_to_xy(0,0);
+    init_orientation();
+    
     /*
     move_to_xy(-30, 30);
-    //init_orientation();
+    init_orientation();
     move_to_xy(-30, -30);
-    //init_orientation();
+    init_orientation();
     move_to_xy(30, -30);
-    //init_orientation();
+    init_orientation();
     move_to_xy(0,0);*/
     
     exit_robot();
