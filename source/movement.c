@@ -354,5 +354,3 @@ int exit_robot(void){ //Exit the ev3
     printf( "*** ( EV3 ) Bye! ***\n" );
     return ( 0 );
 }
-
-
