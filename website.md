@@ -226,13 +226,13 @@ algorithm throw_ball is
 We have two strategies, depending on our opponent. As we are able to throw to balls very fast in the basket, at the very beginning of the game, we could just score two baskets, and then disturb the oppenent in his field and prevent him from scoring. So, here are our strategies:
 
 * If the opponent can just score one basket at the beginning of the game, or if he can just drop his balls in the basket and not throw them:
-First we score two baskets at the beginning by throwing the balls from the distant area. Therefore we have already 6 points when are opponent has at the most 3 points. Then, we cross our frontiers to get to their side of the field, in order to prevent them from looking for their ball and/or scoring another basket. When we cross the field we loose a point, but we are still at 5 vs 3 : ** we win **
+First we score two baskets at the beginning by throwing the balls from the distant area. Therefore we have already 6 points when are opponent has at the most 3 points. Then, we cross our frontiers to get to their side of the field, in order to prevent them from looking for their ball and/or scoring another basket. When we cross the field we loose a point, but we are still at 5 vs 3 : **we win**
 
 * If the opponent can also score two baskets from the distant area at the beginning of the game:
-First we score two baskets from the distant area: we have 6 points, but so they have. This time we do not cross the frontiers, but we explore our field to find another ball. If our opponent choose to come to our side of the field, they loose one point, so even if we don't find a ball, ** we win **. If they also choose to explore their field, three situations could occur:
-    * We find a ball and score a basket from the distant area and they don't : 9 vs 6, so ** we win **
+First we score two baskets from the distant area: we have 6 points, but so they have. This time we do not cross the frontiers, but we explore our field to find another ball. If our opponent choose to come to our side of the field, they loose one point, so even if we don't find a ball, **we win**. If they also choose to explore their field, three situations could occur:
+    * We find a ball and score a basket from the distant area and they don't : 9 vs 6, so **we win**
     * They find a ball and score a basket from the distant area but we don't: 6 vs 9, we loose...
-    * No one is able to find a ball, the time elapsed, 6 vs 6, ** draw **
+    * No one is able to find a ball, the time elapsed, 6 vs 6, **draw**
  
 
 ## Source code
@@ -261,5 +261,28 @@ Antonin was in charge of the Bluetooth connection between the robot and the serv
 
 ### Yasmine Bennani
 
-Yasmine was in charge of the movements of the tachos. 
+I was in charge of the movements of the tachos. I implemented the different functions that make the robot move and turn, such as *move_forward*, ¨move_to_xy* or *turn*.
+I also took in charge of the system integration for each evaluation (for th 18th December and then for the 22th January).
+For the 18th December, the system integration highlighted the fact that moving the robot with only the *move_forward(dist)* and the *turn(angle)* functions was troublesome. Indeed, in order to explore the whole field, we wanted to place the robot at each corner of the field in a row, so moving from one to another took a lot of time of determining the right distance to be runned. Moreover, when it has found a ball, it was hard to know exactly where the robot was exactly on the field to tell him to go to the **shoot position**, which is the **init position**.
+Therefore, after this evaluation, I implemented my own version of the **dead reckoning** process. I was researching a way to be able to know the position of the robot at each time, like a GPS, when I found this kind of process used in navigation. Knowing the current position, this algorithm calculates nonstop the new position, as long as the wheels are running, i.e. as long as the robot position is changing. Thus I made a thread, which tests if the robot is moving, and if it is, the thread updates its position (x,y and its orientation theta). The field is considered as follow: 
+
+ ![Image there](./media/dr_graph.jpg)
+
+Thanks to this thread, I was then able to implement a *move_to_xy* function, to tell the robot to move from its current position to another one defined by its coordinates x, y. As the robot is oriented, this function has to calculte first the angle that need to be turned in order to be in the right direction, and then calculates the distance that to be runned. The thread updates in the backgroud the robot coordinates and orientation.
+
+I also wrote with the contribution of Antonin this Markdown, to document our project and our proposal for this basketball playing robot.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
