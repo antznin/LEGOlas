@@ -271,14 +271,5 @@ int main(){
     if(is_init == -1)
         return -1;
 
-    shoot_from_stage1();
-    Sleep(10000);
-    shoot_from_stage2();
-    Sleep(10000);
-    shoot_from_stage3();
-    Sleep(10000);
-    shoot_from_stage4();
-    Sleep(10000);
-    shoot_from_stage5();
-    return 0;
+    move_forward(5);
 }
