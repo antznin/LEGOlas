@@ -18,6 +18,7 @@
 
 #define Sleep( msec ) usleep(( msec ) * 1000 )
 #define SPEED_FACTOR 1/20
+#define PI 3.1415926
 
 /* This variable is used to communicate between the main thread and
  * the sensor thread (used for permanently retrieving the sensor values)
@@ -270,6 +271,9 @@ struct values single_scan(int sleep_value,
 		set_tacho_command_inx( sn1, TACHO_RUN_FOREVER );
 		set_tacho_command_inx( sn2, TACHO_RUN_FOREVER );
 
+		printf("For angle %f, radius %f\n", 140.9, theoretical_radius(140.9));
+		printf("For angle %f, radius %f\n", 158.0, theoretical_radius(158.0));
+
 		printf("Ignore : %f\n", ignore_angle);
 		while ( fabs(initial_angle - compass_value) < 360.0 ) {
 				get_sensor_value0(snsonar, &sonar_value);
@@ -277,6 +281,9 @@ struct values single_scan(int sleep_value,
 				current_angle = compass_value - initial_angle;
 				// printf("Angle in single_scan : %f\n", sign * current_angle);
 				// printf("Sonar value : %f\n", sonar_value);
+				printf(stderr, "%f %f\n",
+						theoretical_radius(fabs(current_angle)),
+						fabs(current_angle));
 				if (sonar_value < radius_value * 10.5 
 						&& found == 0 
 						&& fabs(current_angle) > ( 360 - ignore_angle - 40)) 
@@ -309,50 +316,61 @@ int are_close(struct values coordinates_1, struct values coordinates_2){
 	else return 0;
 }
 
+/**
+ *   Advances from current position to specified algebraic distance with cho    sen
+ *  speed factor in a straight way
+ *  @param {int} algebraic_distance
+ *  @param {float} speedFactor
+ */
+float theoretical_radius(float angle){
+    float radius;
+    float maxY = 210;
+    float maxX = 550;
+    float minY = 670;
+    float minX = 550;
+    float reduced_angle = angle;
+    float quadrant;
+    float q1 = atan(abs(minX/maxY)) + 90;
+    float q2 = 90;
+    float q3 = q2 + atan(abs(minY/minX)) + 90;
+    float q4 = 180;
+    float q5 = q4 + atan(abs(maxX/minY)) + 90;
+    float q6 = 270;
+    float q7 = q6 + atan(abs(maxY/maxX)) + 90;
+    float q8 = 359.99;
 
-// float theoretical_radius(float angle){
-//     float radius;
-//     float maxY = 210;
-//     float maxX = 550;
-//     float minY = 670;
-//     float minX = 550;
-//     float reduced_angle = angle % 360;
-//     float quadrant;
-//     float radToDegCoef = 180/PI;
-//     float q1 = radToDegCoef*atan(abs(minX/maxY)) + 90;
-//     float q2 = 90;
-//     float q3 = q2 + radToDegCoef*atan(abs(minY/minX)) + 90;
-//     float q4 = 180;
-//     float q5 = q4 + radToDegCoef*atan(abs(maxX/minY)) + 90;
-//     float q6 = 270;
-//     float q7 = q6 + radToDegCoef*atan(abs(maxY/maxX)) + 90;
-//     float q8 = 359.99;
-// 
-//     switch(reduced_angle){
-//       case (reduced_angle >= 0 || reduced_angle <= q1 ):
-//         radius = abs(maxY/cos(reduced_angle));
-//         return radius;
-//       case (reduced_angle > q1 || reduced_angle <= q2 ):
-//         radius = abs(minX/sin(reduced_angle));
-//         return radius;
-//       case (reduced_angle > q2 || reduced_angle <= q3 ):
-//         radius = abs(minX/sin(reduced_angle));
-//         return radius;
-//       case (reduced_angle > q3 || reduced_angle <= q4 ):
-//         radius = abs(minY/cos(reduced_angle));
-//         return radius;
-//       case (reduced_angle > q4 || reduced_angle <= q5 ):
-//         radius = abs(minY/cos(reduced_angle));
-//         return radius;
-//       case (reduced_angle > q5 || reduced_angle <= q6 ):
-//         radius = abs(maxX/sin(reduced_angle));
-//         return radius;
-//       case (reduced_angle > q6 || reduced_angle <= q7 ):
-//         radius = abs(maxX/sin(reduced_angle));
-//         return radius;
-//       case (reduced_angle > q7 || reduced_angle <= q8 ):
-//         radius = abs(maxY/cos(reduced_angle));
-//         return radius;
-//     }
-// 
-//  }
+    if (reduced_angle >= 0 || reduced_angle <= q1 ) {
+        radius = fabs(maxY/cos(reduced_angle));
+        return radius;
+    }
+    else if (reduced_angle > q1 || reduced_angle <= q2 ) {
+        radius = fabs(minX/sin(reduced_angle));
+        return radius;
+    }
+    else if (reduced_angle > q2 || reduced_angle <= q3 ) {
+        radius = fabs(minX/sin(reduced_angle));
+        return radius;
+    }
+    else if (reduced_angle > q3 || reduced_angle <= q4 ) {
+        radius = fabs(minY/cos(reduced_angle));
+        return radius;
+    }
+    else if (reduced_angle > q4 || reduced_angle <= q5 ) {
+        radius = fabs(minY/cos(reduced_angle));
+        return radius;
+    }
+    else if (reduced_angle > q5 || reduced_angle <= q6 ) {
+        radius = fabs(maxX/sin(reduced_angle));
+        return radius;
+    }
+    else if (reduced_angle > q6 || reduced_angle <= q7 ) {
+        radius = fabs(maxX/sin(reduced_angle));
+        return radius;
+    }
+    else if (reduced_angle > q7 || reduced_angle <= q8 ) {
+        radius = fabs(maxY/cos(reduced_angle));
+        return radius;
+    } else {
+	    return -1.0;
+    }
+ }

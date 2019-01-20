@@ -17,5 +17,6 @@ struct values single_scan(int sleep_value,
 		float radius_value, 
 		int sign, 
 		float ignore_angle);
+float theoretical_radius(float angle);
 
 #endif
