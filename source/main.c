@@ -34,7 +34,9 @@ void strategy1(){
     throw_ball();
     
     /* Go to the opponent's field */
-    curved_turn(0.5, 1, 1000);
+    curved_turn(0.2, 0.6, 1000);
+    curved_turn(0.2, 0.6, 1000);
+    curved_turn(0.2, 0.6, 1000);
     Sleep(120 * 1000); // Sleep for 2 minutes
 }
 
