@@ -12,7 +12,6 @@
 
 #define SERV_ADDR	"18:5e:0f:9d:7c:99"     /* Sami's MAC address */
 #define TEAM_ID 	1                       /* Team ID */
-
 #define MSG_ACK 	0
 #define MSG_START 	1
 #define MSG_STOP 	2

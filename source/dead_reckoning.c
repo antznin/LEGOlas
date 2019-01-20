@@ -281,6 +281,60 @@ int move_to_xy(float x, float y){
 }
 
 
+/* Makes the robot move forward for dist cm (if dist is neg, move back) */
+void move_forward(int dist){
+    uint8_t sn_left, sn_right;
+    int port_left = 66; /* Left wheel */
+    int port_right = 67; /* Right wheel */
+    int max_speed, max_speed_left, max_speed_right, count_per_rot;
+    float t=0; //t in sec
+    
+    if ( ev3_search_tacho_plugged_in(port_left,0, &sn_left, 0 ) &&  ev3_search_tacho_plugged_in(port_right,0, &sn_right, 0 )) {
+        /* Get max_speed and get count_per_rot */
+        get_tacho_count_per_rot(sn_left, &count_per_rot);
+        get_tacho_max_speed( sn_left, &max_speed_left);
+        get_tacho_max_speed( sn_right, &max_speed_right);
+        
+        set_tacho_stop_action_inx( sn_left, TACHO_COAST );
+        set_tacho_stop_action_inx( sn_right, TACHO_COAST );
+        
+        if(max_speed_left == max_speed_right || max_speed_left < max_speed_right) /* Set max_speed to the lowest max_speed (left or right) */
+            max_speed = max_speed_left;
+        else
+            max_speed = max_speed_right;
+        
+        /* Set tacho speed to (1/3) * max_speed */
+        if(dist > 0) {
+            set_tacho_speed_sp( sn_left, max_speed * 1/3);
+            set_tacho_speed_sp( sn_right, max_speed * 1/3);
+        }
+        else {
+            set_tacho_speed_sp( sn_left, - max_speed * 1/3);
+            set_tacho_speed_sp( sn_right, - max_speed * 1/3);
+        }
+        
+        /* Calculate time the tacho will run */
+        t = (float) (count_per_rot * dist )/(max_speed * 1/3 * PI * WHEEL_DIAM) ;
+        printf("Tacho will run for %f seconds \n", t);
+        
+        /* Set tachos to run for t seconds */
+        set_tacho_time_sp( sn_left, t*1000 );
+        set_tacho_time_sp( sn_right, t*1000 );
+        set_tacho_command_inx( sn_left, TACHO_RUN_TIMED );
+        set_tacho_command_inx( sn_right, TACHO_RUN_TIMED );
+        rewrite_state((char *)"TACHO_RUN_TIMED");
+        Sleep(t*1000);
+        rewrite_state((char *)"TACHO_STOP");
+        
+    } else {
+        printf( "LEGO_EV3_M_MOTOR NOT found\n");
+    }
+    
+    /* Waiting for the tacho to stop */
+    Sleep( t*1000 );
+}
+
+
 /****************************************************************/
 /*                  Init and exit functions                     */
 /****************************************************************/
@@ -329,28 +383,20 @@ int init_robot( void ) // Find the tachos
 /*                      Main function                           */
 /****************************************************************/
 
+/*
 int main() {
     init_robot();
     init_pos();
     pthread_t reckoning_thread;
     pthread_create(&reckoning_thread, NULL, dead_reckoning, NULL);
-    
+
     move_to_xy(30,15);
     move_to_xy(0,15);
     move_to_xy(0,0);
     init_orientation();
     
-    /*
-    move_to_xy(-30, 30);
-    init_orientation();
-    move_to_xy(-30, -30);
-    init_orientation();
-    move_to_xy(30, -30);
-    init_orientation();
-    move_to_xy(0,0);*/
-    
     exit_robot();
     
     return 0;
 }
-
+*/
