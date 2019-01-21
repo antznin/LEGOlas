@@ -1,4 +1,6 @@
-# Group 1 ev3Robot Project
+# LEGOlas : Group 1 ev3 Robot Project
+
+![Robot logo](./media/robot_logo.jpg)
 
 This robot project was made in the context of the [OS EURECOM course](http://soc.eurecom.fr/OS). The goal of the project was to build an ev3 LEGO programmable robot that can play a "basketball" game in a pre-built field. All the rules and specifications of the field can be found on the [OS website](http://soc.eurecom.fr/OS/projects_fall2018.html).
 
@@ -51,11 +53,51 @@ The robot complies to the given [specifications](http://soc.eurecom.fr/OS/projec
 
 ### Find a ball: the scan
 
-```
-algorithm scan is
-    input:  
+#### Our first idea
+
+The first idea for the scan was a rather simple idea. The sonar sensor returns a value in millimeter corresponding to the distance between the sensor and the first object the sonar wave reflects on.
+
+Based on the idea that the sensor would give a reasonable and correct output, the first scan was declaring that the ball was found if he found any object closer than a fixed distance. The robot will then turn on itself and proceed to a scan until he founds something. If it finds nothing, it stops at the input angle.
+
+We had to separate the algorithm in order to permanently retrieve the sensor values and at the same time moving the robot. Separating in threads allowed us to make the robot move as we wanted.
+
+That would give the pseudo code below :
 
 ```
+algorithm scan is
+    input: A fixed radius (the maximum distance) R
+    	   An angle A
+    output : a couple (angle, distance)
+
+    create global variable notFinished
+	create the sensor value thread and pass the parameters A and R
+	while (notFinished):
+		control the robot in a certain wat
+	
+	stop the robot
+
+	return (angle, radius)
+
+sensor thread is
+	while (current angle < A and current sonar distance > R):
+		store the current values in two variables
+	notFinished = 0
+	
+	if current angle has reached A:
+		return angle of 0 and radius of 0 to main thread
+	else:
+		return current angle and radius to main thread
+```
+
+We wanted to move around the field and try to cover as much of the field as possible. However, because of the uncertainty of the postion and of the imprecision of the sonar sensor, we gave up on that idea.
+
+#### Aim lower, but with more confidence
+
+The scanning was a tough part of the project. The imprecision of the sensor lead us to aim at a lower distance, but optimized the scanning area based on the **real output** of the sensor.
+
+Let us first show the output of the sonar sensor without any ball and a robot on the other field. We placed the robot at its initial position (inside the square) and printed the output on the terminal. Sami coded a function that, for any given angle, will output the **theoretical** radius (i.e. the distance between an object and the robot), here being the shape of the field : a rectangle.
+
+Here are the mapping results :
 
 ### Move toward the ball
 
