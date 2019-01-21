@@ -281,10 +281,11 @@ struct values single_scan(int sleep_value,
 				current_angle = compass_value - initial_angle;
 				// printf("Angle in single_scan : %f\n", sign * current_angle);
 				// printf("Sonar value : %f\n", sonar_value);
-				printf(stderr, "%f %f\n",
+				printf("%f %f\n",
 						theoretical_radius(fabs(current_angle)),
 						fabs(current_angle));
-				if (sonar_value < radius_value * 10.5 
+				printf("%f %f\n", sonar_value, current_angle);
+				if (sonar_value < theoretical_radius(fabs(current_angle)) 
 						&& found == 0 
 						&& fabs(current_angle) > ( 360 - ignore_angle - 40)) 
 				{ 
@@ -292,7 +293,7 @@ struct values single_scan(int sleep_value,
 						// myvalues[count].angle = current_angle;
 						myvalues.angle = fmod(360.0 + current_angle, 360.0);
 						myvalues.radius = sonar_value;
-						printf("======== FOUND =======\nSonar : %f, Angle : %f\n======================\n",
+						 printf("======== FOUND =======\nSonar : %f, Angle : %f\n======================\n",
 							sonar_value, fmod(360.0 + current_angle, 360.0));
 						found = 1;
 				}
@@ -316,61 +317,73 @@ int are_close(struct values coordinates_1, struct values coordinates_2){
 	else return 0;
 }
 
-/**
- *   Advances from current position to specified algebraic distance with cho    sen
- *  speed factor in a straight way
- *  @param {int} algebraic_distance
- *  @param {float} speedFactor
- */
-float theoretical_radius(float angle){
-    float radius;
-    float maxY = 210;
-    float maxX = 550;
-    float minY = 670;
-    float minX = 550;
-    float reduced_angle = angle;
-    float quadrant;
-    float q1 = atan(abs(minX/maxY)) + 90;
-    float q2 = 90;
-    float q3 = q2 + atan(abs(minY/minX)) + 90;
-    float q4 = 180;
-    float q5 = q4 + atan(abs(maxX/minY)) + 90;
-    float q6 = 270;
-    float q7 = q6 + atan(abs(maxY/maxX)) + 90;
-    float q8 = 359.99;
+//------------------------------------------------------------------------------
+//----------------------------Mathematical scan functions-----------------------
+//------------------------------------------------------------------------------
 
-    if (reduced_angle >= 0 || reduced_angle <= q1 ) {
-        radius = fabs(maxY/cos(reduced_angle));
-        return radius;
-    }
-    else if (reduced_angle > q1 || reduced_angle <= q2 ) {
-        radius = fabs(minX/sin(reduced_angle));
-        return radius;
-    }
-    else if (reduced_angle > q2 || reduced_angle <= q3 ) {
-        radius = fabs(minX/sin(reduced_angle));
-        return radius;
-    }
-    else if (reduced_angle > q3 || reduced_angle <= q4 ) {
-        radius = fabs(minY/cos(reduced_angle));
-        return radius;
-    }
-    else if (reduced_angle > q4 || reduced_angle <= q5 ) {
-        radius = fabs(minY/cos(reduced_angle));
-        return radius;
-    }
-    else if (reduced_angle > q5 || reduced_angle <= q6 ) {
-        radius = fabs(maxX/sin(reduced_angle));
-        return radius;
-    }
-    else if (reduced_angle > q6 || reduced_angle <= q7 ) {
-        radius = fabs(maxX/sin(reduced_angle));
-        return radius;
-    }
-    else if (reduced_angle > q7 || reduced_angle <= q8 ) {
-        radius = fabs(maxY/cos(reduced_angle));
-        return radius;
-    } else {
-	    return -1.0;
-    }
+/**
+ *   Defines a function that represents the parameterized curve of the terrain
+ *  considering the intersection of the initial rotation axis and the surface
+ *  of the terrain as its origin and its axes are parallel to the walls
+ *  @param {float} angle
+ *  @return {float} theoretical_radius
+ */
+  /*
+                      Y-axis
+   _____________________^_______________________
+  |               1     |       8              |
+  |________2____________|_____________7_______>|        X-axis
+  |        3            |           6          |
+  |                     |                      |
+  |____________4________|_________5____________|
+
+  Numbers represent the number of the quadrant
+
+
+
+  */
+
+ float theoretical_radius(float angle){
+    float radius;
+    float maxY = 200;
+    float maxX = 435;
+    float minY = 465;
+    float minX = 390;
+    float degToRad = PI/180;
+    float reduced_angle = degToRad * angle ;
+    float q1 = 61.0 ; //66.57
+    float q2 = 90.0;
+    float q3 = 140.0 ; //140.2
+    float q4 = 180.0;
+    float q5 = 222.4; //219.8
+    float q6 = 270.0;
+    float q7 = 294.43; //293.43
+    float q8 = 360.0;
+      if (angle >= 0 && angle <= q1 ){
+        radius = abs(maxY/cos(reduced_angle));
+        return radius;}
+      else if (angle > q1 && angle <= q2 ){
+        radius = abs(minX/sin(reduced_angle));
+        return radius;}
+      else if (angle > q2 && angle <= q3 ){
+        radius = abs(minX/sin(reduced_angle));
+        return radius;}
+      else if (angle > q3 && angle <= q4 ){
+        radius = abs(minY/cos(reduced_angle));
+        return radius;}
+      else if (angle > q4 && angle <= q5 ){
+        radius = abs(minY/cos(reduced_angle));
+        return radius;}
+      else if (angle > q5 && angle <= q6 ){
+        radius = abs(maxX/sin(reduced_angle));
+        return radius;}
+      else if (angle > q6 && angle <= q7 ){
+        radius = abs(maxX/sin(reduced_angle));
+        return radius;}
+      else if (angle > q7 && angle <= q8 ){
+        radius = abs(maxY/cos(reduced_angle));
+        return radius;}
+
  }
+
+//------------------------------------------------------------------------------
