@@ -348,12 +348,12 @@ int are_close(struct values coordinates_1, struct values coordinates_2){
     float maxY = 200;
     float maxX = 435;
     float minY = 465;
-    float minX = 390;
+    float minX = 435;
     float degToRad = PI/180;
     float reduced_angle = degToRad * angle ;
-    float q1 = 61.0 ; //66.57
+    float q1 = 65.0 ; //66.57
     float q2 = 90.0;
-    float q3 = 140.0 ; //140.2
+    float q3 = 137.0 ; //140.2
     float q4 = 180.0;
     float q5 = 222.4; //219.8
     float q6 = 270.0;
