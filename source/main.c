@@ -13,9 +13,10 @@
 #include "ballDetection.h"
 #include "ballaunch.h"
 #include "dead_reckoning.h"
+#include "client.h"
 
 #define Sleep( msec ) usleep(( msec ) * 1000 )
-#define DELAY 1000
+#define DELAY 5000
 #define ARM_LENGTH 8 /* Length of the robot's arm that will catch the ball */
 
 
@@ -24,19 +25,11 @@
 /*******************************************************************/
 
 void strategy1(){
-    /* Throw the first two balls */
-    move_forward(-8);
-    Sleep(1000);
-    throw_ball();
-    dismiss_hand_wc();
-    catch_ball(1600);
-    dismiss_hand_wc();
-    throw_ball();
     
     /* Go to the opponent's field */
-    curved_turn(0.2, 0.6, 1000);
-    curved_turn(0.2, 0.6, 1000);
-    curved_turn(0.2, 0.6, 1000);
+    turn(30);
+    curved_turn(0.62, 1, 3000);
+    release_catapult();
     Sleep(120 * 1000); // Sleep for 2 minutes
 }
 
@@ -52,19 +45,12 @@ void strategy2(){
     int found = 0;
     int count = 0;
     
-    /* Throw the first two balls */
-    move_forward(-8);
-    Sleep(1000);
-    throw_ball();
-    dismiss_hand_wc();
-    catch_ball(1600);
-    dismiss_hand_wc();
-    throw_ball();
-    
     /* Move to scan position */
+    printf("HEYYYYYYYYY\n");
     move_to_xy(-6,9);
     init_orientation();
-    
+    Sleep(1000); 
+    printf("after move_to_xy and init_orientation\n");
     /* Then scan, find a ball, go to shoot position, shoot and scan again */
     while(1){
         first_scan_values = single_scan(DELAY,1,45,1, 360);
@@ -87,6 +73,7 @@ void strategy2(){
             throw_ball();
         }
         
+	printf("%d\n", count%3);
         if((count % 3) == 1){
             move_to_xy(-6,9);
             init_orientation();
@@ -116,8 +103,21 @@ int main(){
     init_pos();
     pthread_t reckoning_thread;
     pthread_create(&reckoning_thread, NULL, dead_reckoning, NULL);
-    
-    strategy1();
+
+    connect_bt();
+    while (hasStarted != 1) {};
+
+    /* Throw the first two balls */
+    move_forward(-8);
+    throw_ball();
+    dismiss_hand_wc();
+    catch_ball(1600);
+    dismiss_hand_wc();
+    throw_ball();
+    hold_catapult_for_movement();
+    move_forward(8); 
+    move_to_xy(-6,9);
+    //strategy2();
 
     exit_robot();
 }
