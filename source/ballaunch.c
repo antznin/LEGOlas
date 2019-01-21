@@ -8,11 +8,11 @@
 #define Sleep( msec ) usleep(( msec ) * 1000 )
 
 
-void catch_ball(){
+void catch_ball(int msDuration){
     uint8_t sn;
     int portNb = 65;
     float speedFactor = -0.1;
-    int msDuration = 1600;
+    // int msDuration = 1600;
     if (ev3_search_tacho_plugged_in(portNb,0,&sn,0))
     {
         int max_speed;
@@ -22,6 +22,7 @@ void catch_ball(){
         set_tacho_speed_sp(sn,speedFactor*max_speed);
         set_tacho_time_sp(sn, msDuration);
         set_tacho_command_inx(sn, TACHO_RUN_TIMED);
+	Sleep(msDuration + 200);
     }
     else {
             printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", (portNb-64));
@@ -43,6 +44,7 @@ void place_hand_for_movement(){
         set_tacho_speed_sp(sn,speedFactor*max_speed);
         set_tacho_time_sp(sn, msDuration);
         set_tacho_command_inx(sn, TACHO_RUN_TIMED);
+	Sleep(msDuration + 200);
     }
     else {
             printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", (portNb-64));
@@ -64,6 +66,7 @@ void dismiss_hand_nc(){ //nc = no catapult
         set_tacho_speed_sp(sn,speedFactor*max_speed);
         set_tacho_time_sp(sn, msDuration);
         set_tacho_command_inx(sn, TACHO_RUN_TIMED);
+	Sleep(msDuration + 200);
     }
     else {
             printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", (portNb-64));
@@ -85,6 +88,7 @@ void dismiss_hand_wc(){ // wc= with catapult
         set_tacho_speed_sp(sn,speedFactor*max_speed);
         set_tacho_time_sp(sn, msDuration);
         set_tacho_command_inx(sn, TACHO_RUN_TIMED);
+	Sleep(msDuration + 200);
     }
     else {
             printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", (portNb-64));
@@ -106,8 +110,7 @@ void throw_ball(){
         set_tacho_speed_sp(sn,speedFactor*max_speed);
         set_tacho_time_sp(sn, msDuration);
         set_tacho_command_inx(sn, TACHO_RUN_TIMED);
-
-
+	Sleep(msDuration + 200);
     }
     else {
             printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", (portNb-64));
@@ -129,8 +132,7 @@ void hold_catapult_for_movement(){
         set_tacho_speed_sp(sn,speedFactor*max_speed);
         set_tacho_time_sp(sn, msDuration);
         set_tacho_command_inx(sn, TACHO_RUN_TIMED);
-
-
+	Sleep(msDuration + 200);
     }
     else {
             printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", (portNb-64));
@@ -151,8 +153,7 @@ void release_catapult(){
         set_tacho_speed_sp(sn,speedFactor*max_speed);
         set_tacho_time_sp(sn, msDuration);
         set_tacho_command_inx(sn, TACHO_RUN_TIMED);
-
-
+	Sleep(msDuration + 200);
     }
     else {
             printf( "LEGO_EV3_M_MOTOR %d is NOT found\n", (portNb-64));
