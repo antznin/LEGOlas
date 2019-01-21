@@ -200,17 +200,6 @@ struct values single_scan(int sleep_value,
 		float radius_value, 
 		int sign, 
 		float ignore_angle) {
-	/*
-	 * This functions makes the robot turn on it self until it detects the ball.
-	 * It returns the angle and makes the robot turn back to its initial position.
-	 *
-	 * The main thread makes the robot turn, and a thread takes the
-	 * sensor values continuously.
-	 *
-	 * @param {float} angle : turn for angle
-	 * @param {float} radius : maximum radius distance (threshold)
-	 * @return {struct values} myvalues : structure composed of an angle and a radius
-	 */
 
 	uint8_t sn1, sn2, sncompass, snsonar;
 	int port1, port2;
