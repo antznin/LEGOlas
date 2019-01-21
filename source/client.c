@@ -9,6 +9,11 @@
 #include <bluetooth/rfcomm.h>
 #include <pthread.h>
 #include "client.h"
+#include "dead_reckoning.h"
+#include "ev3.h"
+#include "ev3_port.h"
+#include "ev3_tacho.h"
+#include "ev3_sensor.h"
 
 #define SERV_ADDR	"18:5e:0f:9d:7c:99"     /* Sami's MAC address */
 #define TEAM_ID 	1                       /* Team ID */
@@ -80,15 +85,24 @@ static void * client_thread_routine(void * data) {
 static void * waiting_thread_routine(void * data) {
 
 	char string[58];
+	uint8_t sn1, sn2;
+	int port1, port2;
+	port1 = 66; port2 = 67; // left motor, right motor
 
 	while (1) {
 		read_from_server (s, string, 9);
 		printf("Reading from server...\n");
 		if (string[4] == MSG_START) {
 			hasStarted = 1;
-		} else if (string[4] == MSG_STOP) {
+		} else if (string[4] == MSG_STOP || string[4] == MSG_KICK) {
 			hasEnded = 1;
-			break;
+			if ( ev3_search_tacho_plugged_in(port1,0, &sn1, 0 )
+					&& ev3_search_tacho_plugged_in(port2,0, &sn2, 0 )) {
+				set_tacho_command_inx(sn1, TACHO_STOP);
+				set_tacho_command_inx(sn2, TACHO_STOP);
+			}
+			exit_robot();
+			exit(0);
 		}
 		Sleep(10);
 	}
