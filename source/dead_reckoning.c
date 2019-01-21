@@ -78,8 +78,9 @@ void *dead_reckoning(void* unused)
                 {
                     /* Moving in a straight line */
                     sign_speed = speed_left / abs(speed_left);
-                    theta = current_position.theta;
-                    dist = (float)sign_speed * ((CLOCK_PER * (float)(speed_left) * PI * WHEEL_DIAM ) / (float)count_per_rot) ; // Distance runned in CLOCK_PER seconds
+		    printf("sign_speed : %d \n", sign_speed);
+		    theta = current_position.theta;
+                    dist = (float) sign_speed * ((CLOCK_PER * (float)(speed_left) * PI * WHEEL_DIAM ) / (float)count_per_rot) ; // Distance runned in CLOCK_PER seconds
                     
                     /* Update current_position.x and current_position.y */
                     if(theta <= 90)
@@ -142,11 +143,11 @@ int turn(float angle) {
     }
     
     if( ev3_search_tacho_plugged_in(port_left, 0, &sn_left, 0) &&  ev3_search_tacho_plugged_in(port_right,0, &sn_right, 0 ) && angle != 0) {
-        set_tacho_stop_action_inx( sn_left, TACHO_STOP );
-        set_tacho_stop_action_inx( sn_right, TACHO_STOP );
-        
         get_tacho_max_speed(sn_left, &max_speed_left);
         get_tacho_max_speed(sn_left, &max_speed_right);
+
+        set_tacho_stop_action_inx( sn_left, TACHO_BRAKE );
+        set_tacho_stop_action_inx( sn_right, TACHO_BRAKE );
         
         if(max_speed_left == max_speed_right || max_speed_left < max_speed_right)  /* Set max_speed to the lowest max_speed (left or right) */
             max_speed = max_speed_left;
@@ -202,6 +203,9 @@ int move_to_xy(float x, float y){
         get_tacho_max_speed( sn_left, &max_speed_left);
         get_tacho_max_speed( sn_right, &max_speed_right);
         
+        set_tacho_stop_action_inx( sn_left, TACHO_BRAKE );
+        set_tacho_stop_action_inx( sn_right, TACHO_BRAKE );
+
         /* Set max_speed to the lowest max_speed (left or right) */
         if(max_speed_left == max_speed_right || max_speed_left < max_speed_right)
             max_speed = max_speed_left;
@@ -235,7 +239,9 @@ int move_to_xy(float x, float y){
             sin_theta = (y0 - y)/dist;
             theta = atan(sin_theta/cos_theta) + PI/2;
         }
-        else { return 0; } //Already here
+        else {
+	    printf("In the else\n");	
+	    return 0; } //Already here
         
         /* Turn to be in the right direction */
         angle = current_position.theta - 90; // The diff angle from the beginning direction
@@ -295,8 +301,8 @@ void move_forward(int dist){
         get_tacho_max_speed( sn_left, &max_speed_left);
         get_tacho_max_speed( sn_right, &max_speed_right);
         
-        set_tacho_stop_action_inx( sn_left, TACHO_COAST );
-        set_tacho_stop_action_inx( sn_right, TACHO_COAST );
+        set_tacho_stop_action_inx( sn_left, TACHO_BRAKE );
+        set_tacho_stop_action_inx( sn_right, TACHO_BRAKE );
         
         if(max_speed_left == max_speed_right || max_speed_left < max_speed_right) /* Set max_speed to the lowest max_speed (left or right) */
             max_speed = max_speed_left;
@@ -305,16 +311,17 @@ void move_forward(int dist){
         
         /* Set tacho speed to (1/3) * max_speed */
         if(dist > 0) {
-            set_tacho_speed_sp( sn_left, max_speed * 1/3);
-            set_tacho_speed_sp( sn_right, max_speed * 1/3);
+            set_tacho_speed_sp( sn_left, max_speed * 1/4);
+            set_tacho_speed_sp( sn_right, max_speed * 1/4);
         }
         else {
-            set_tacho_speed_sp( sn_left, - max_speed * 1/3);
-            set_tacho_speed_sp( sn_right, - max_speed * 1/3);
+            set_tacho_speed_sp( sn_left, - max_speed * 1/4);
+            set_tacho_speed_sp( sn_right, - max_speed * 1/4);
         }
         
         /* Calculate time the tacho will run */
-        t = (float) (count_per_rot * dist )/(max_speed * 1/3 * PI * WHEEL_DIAM) ;
+        t = (float) (count_per_rot * abs(dist) )/(max_speed * 1/4 * PI * WHEEL_DIAM) ;
+	printf("%d %d %d\n", count_per_rot, abs(dist), max_speed);
         printf("Tacho will run for %f seconds \n", t);
         
         /* Set tachos to run for t seconds */
@@ -322,9 +329,9 @@ void move_forward(int dist){
         set_tacho_time_sp( sn_right, t*1000 );
         set_tacho_command_inx( sn_left, TACHO_RUN_TIMED );
         set_tacho_command_inx( sn_right, TACHO_RUN_TIMED );
-        rewrite_state((char *)"TACHO_RUN_TIMED");
-        Sleep(t*1000);
-        rewrite_state((char *)"TACHO_STOP");
+        //rewrite_state((char *)"TACHO_RUN_TIMED");
+        //Sleep(t*1000);
+        //rewrite_state((char *)"TACHO_STOP");
         
     } else {
         printf( "LEGO_EV3_M_MOTOR NOT found\n");

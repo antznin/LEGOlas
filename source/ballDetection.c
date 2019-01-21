@@ -251,8 +251,8 @@ struct values single_scan(int sleep_value,
 
 		get_tacho_max_speed( sn1, &max_speed );
 
-		set_tacho_stop_action_inx( sn1, TACHO_COAST );
-		set_tacho_stop_action_inx( sn2, TACHO_COAST );
+		set_tacho_stop_action_inx( sn1, TACHO_BRAKE );
+		set_tacho_stop_action_inx( sn2, TACHO_BRAKE );
 
 		set_tacho_speed_sp( sn1, sign * max_speed * SPEED_FACTOR );
 		set_tacho_speed_sp( sn2,-sign * max_speed * SPEED_FACTOR );
