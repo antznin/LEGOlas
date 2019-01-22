@@ -104,6 +104,8 @@ Before getting the real output of the sensor we first thought of simply putting 
 
 But the problem was that, the real output didn't even have the shape of a rectangle. So we narrowed our scan to a much smaller rectangle that fits inside most of the graphs that we generated with the real output of the sensor. Making it a lot more reliable, but it still wasn't enough so we eventually decided to scan from a few relevant positions.  
 
+N.B. : we shall mention that the changes related to the scanning committed after the commit [d88693c5](https://gitlab.eurecom.fr/godard/OS_Group1_ev3Project/commit/d88693c558afc78c5c20f1152e7f3501c21c7bf0) were pushed by @godard, but most of the commits were the result of a collaborative work between @aazmi and @godard 
+
 ### The bluetooth threads
 
 The bluetooth core functions were established by Matteo Bertolino and the bluetooth repository can be found [here](https://gitlab.eurecom.fr/ludovic.apvrille/OS_Robot_Project_Fall2018).
