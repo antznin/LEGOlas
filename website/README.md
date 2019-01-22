@@ -21,25 +21,24 @@ The robot complies to the given [specifications](http://soc.eurecom.fr/OS/projec
    * One for the catapult arm
    * One for the "ball-grabbing", i.e. an arm
  * The robot communicates over bluetooth in a reliable way
- * The robot fits into a 35cm³ at the start of the game by "folding" its arms (catapult and grabbing arm)
+ * The robot fits into a 35cm wide cube at the start of the game by "folding" its arms (catapult and grabbing arm)
  * It doesn't use any destructive weapon, only the elements inside the LEGO box
- * Robot is fully autnomous as soon as the game starts
+ * Robot is fully autonomous as soon as the game starts
  
  To be able to move and to find a ball on the field, the robot uses three sensors:
  
  * EV3 Ultrasonic Sensor:
    * Principle: it generates sound waves and reads their echoes to detect and measure distance from objects
-   * According to its documentation, that one can find on the [LEGO website](https://shop.lego.com/en-US/product/EV3-Ultrasonic-Sensor-45504), this sensor should measure distance between one and 250 cm. Unfortunately, the experience showed us that when a ball was too close from the robot, the sensor did not return the corresponding distance, and we were therefore unfit to detect the ball. 
-   * Position on the robot: very close from the floor, and parallel to it, as one can see on the image below:
- 
+   * According to its documentation, that one can find on the [LEGO website](https://shop.lego.com/en-US/product/EV3-Ultrasonic-Sensor-45504), this sensor should measure distance the between itself and an object far from 250cm maximum. Unfortunately, the experience showed us that when a ball was too close from the robot, the sensor did not return the corresponding distance, and we were therefore unfit to detect the ball. 
+   * Position on the robot: very close from the floor, and parallel to it, as one can see on the image below
+   * We used this sensor to detect the ball on the field, and more particularly to get its distance from the robot, to be able to move toward it and to catch it.
+
  ![The sonar sensor](./media/sonar.jpg)
  
-  * We used this sensor to detect the ball on the field, and more particularly to get its distance from the robot, to be able to move toward it and to catch it.
- 
  * EV3 Gyro Sensor:
-  * Principle: it measures the robot’s rotational motion and changes in its orientation
-  * According to the documentation that on can find on the [LEGO website](https://shop.lego.com/en-CA/product/EV3-Gyro-Sensor-45505), the angle mode measures angles with an accuracy of +/- 3 degrees. It was enough for us in order to be able to turn the robot through a given angle. 
-  * Position on the robot: centered and horizontal, in order to be able to measure the rotation around the perpendicular angle.
+   * Principle: it measures the robot’s rotational motion and changes in its orientation
+   * According to the documentation that on can find on the [LEGO website](https://shop.lego.com/en-CA/product/EV3-Gyro-Sensor-45505), the angle mode measures angles with an accuracy of +/- 3 degrees. It was enough for us in order to be able to turn the robot through a given angle. 
+   * Position on the robot: centered and horizontal, in order to be able to measure the rotation around the perpendicular angle.
 
  ![Gyro and flag](./media/gyro_flag.jpg)
 
@@ -50,11 +49,11 @@ The robot complies to the given [specifications](http://soc.eurecom.fr/OS/projec
 
 #### Our first idea
 
-The first idea for the scan was a rather simple idea. The sonar sensor returns a value in millimeter corresponding to the distance between the sensor and the first object the sonar wave reflects on.
+The first idea for the scan was a rather simple idea. The sonar sensor returns a value in millimeter corresponding to the distance between the sensor and the first object the sound wave reflects on.
 
-Based on the idea that the sensor would give a reasonable and correct output, the first scan was declaring that the ball was found if he found any object closer than a fixed distance. The robot will then turn on itself and proceed to a scan until he founds something. If it finds nothing, it stops at the input angle.
+Based on the idea that the sensor would give a reasonable and correct output, the first scan was declaring that the ball was found if it found any object closer than a fixed distance. The robot will then turn on itself and proceed to a scan until he founds something. If it finds nothing, it stops at the input angle.
 
-We had to separate the algorithm in order to permanently retrieve the sensor values and at the same time moving the robot. Separating in threads allowed us to make the robot move as we wanted.
+We had to separate the algorithm in order to permanently retrieve the sensor values and at the same time moving the robot. Separating in a thread allowed us to make the robot move as we wanted.
 
 That would give the pseudo code below :
 
@@ -67,7 +66,7 @@ algorithm scan is
     create global variable notFinished
 	create the sensor value thread and pass the parameters A and R
 	while (notFinished):
-		control the robot in a certain wat
+		control the robot in a certain way
 	
 	stop the robot
 
@@ -85,21 +84,41 @@ sensor thread is
 ```
 #### Our second idea
 
-The first idea had two major defects, firstly the scan cone was sometimes too wide and so the robot found the ball at a considerably large offset angle. The second defect was that, the actual values of the sonar sensor were so different from the theoretical ones. As a solution for the first problem we decided to compute the mean of two relevant positions (meaning that correspond to the same ball). In order to do that we use the following strategy : our new scan consists of turning 360 degrees in relatively positive direction, then once it detects a "ball" it ignores all angle values that follow until the end of the 360 turn. Then it turns in the negative direction ignoring all obstacles that could potentially be in the previously ignored zone minus 30 degrees. Two positions are considered close if the difference between the distances at which they were detected is negligible. This allows us to find the ball in a more reliable way.
+The first idea had two major defects, firstly the scan cone was sometimes too wide and so the robot found the ball at a considerably large offset angle. The second defect was that the actual values of the sonar sensor were so different from the theoretical ones. As a solution for the first problem we decided to compute the mean of two relevant positions (meaning that correspond to the same ball). In order to do that we use the following strategy : our new scan consists of turning 360 degrees in relatively positive direction, then once it detects a "ball" it ignores all angle values that follow until the end of the 360 turn. Then it turns in the negative direction ignoring all obstacles that could potentially be in the previously ignored zone minus 30 degrees. Two positions are considered close if the difference between the distances at which they were detected is negligible. This allows us to find the ball in a more reliable way.
 
 To counter the second problem, we wanted to move around the field and try to cover as much of the field as possible. However, because of the uncertainty of the position and of the imprecision of the sonar sensor, we gave up on that idea especially that moving around too much requires calibrating all the time and it wouldn't be that beneficial in games that would last 4 minutes to spend much time on that. So we decided to adopt the following strategy.
 
-**Aim lower, but with more confidence :**
+**Aim at a lower distance, but with more confidence :**
 
-The scanning was a tough part of the project. The imprecision of the sensor lead us to aim at a lower distance, but optimized the scanning area based on the **real output** of the sensor.
+The scanning was a tough part of the project. The imprecision of the sensor lead us to aim at a lower distance, but also to optimize the scanning area based on the **real output** of the sensor.
 
 Let us first show the output of the sonar sensor without any ball and a robot on the other field. We placed the robot at its initial position (inside the square) and printed the output on the terminal. Sami coded a function that, for any given angle, will output the **theoretical** radius (i.e. the distance between an object and the robot), here being the shape of the field : a rectangle.
 
-Here are the mapping results :
+Here are the plotting results (made with a simple python script) :
 
-Before getting the real output of the sensor we first thought of simply putting as a condition of finding the ball, finding a sonar value that is smaller than the theoretical radius computed by the function that we coded for it, give or take a few centimeters. But the problem was that, the real output didn't even have the shape of a rectangle. So we narrowed our scan to a much smaller rectangle that fits inside most of the graphs that we generated with the real output of the sensor. Making it a lot more reliable, but it still wasn't enough so we eventually decided to scan from a few relevant positions.  
+![Sensor plots](./media/sensor_output.jpg)
 
-### Move towards the ball
+Before getting the real output of the sensor we first thought of simply putting as a condition of finding the ball, finding a sonar value that is smaller than the theoretical radius computed by the function that we coded for it, give or take a few centimeters. Here is what the final scanning looked like :
+
+![Final scanning area](./media/final_area.png)
+
+But the problem was that, the real output didn't even have the shape of a rectangle. So we narrowed our scan to a much smaller rectangle that fits inside most of the graphs that we generated with the real output of the sensor. Making it a lot more reliable, but it still wasn't enough so we eventually decided to scan from a few relevant positions.  
+
+### The bluetooth threads
+
+The bluetooth core functions were established by Matteo Bertolino and the bluetooth repository can be found [here](https://gitlab.eurecom.fr/ludovic.apvrille/OS_Robot_Project_Fall2018).
+
+The bluetooth was implemented thanks to threads. Threads allow to execute instructions while the robot is running. The bluetooth design can be described as followed :
+ 1. Initiate the bluetooth connection from the main thread and create two threads
+ 1. A thread will permanently run in order to get messages from the server :
+    * When receiving `MSG_START`, it unlocks the robot and the robot can proceed to a given strategy
+    * When receiving `MSG_STOP` or `MSG_KICK`, the robot stops and exits
+ 1. A thread runs and waits to be woken up. It used a mutex and a condition variable. The main thread can execute `send_score(int score)` and the thread will wake up and the the corresponding score to the server. When finished, it goes back to sleep.
+
+ All the functions and thread routines can be found in `source/client.c`.
+
+
+### Move toward the ball
 
 These algorithms have been written by Yasmine Bennani.
 First, I implemented only the *move_forward* and the *turn* functions. Therefore, the robot was able to move forward a given distance in centimeter, and to turn through a given angle. But it was then troublesome to know exactly which distance should be runned during the explore state (the state during which the robot explores the field in order to find a ball). Moreover, the path taken by the robot was not optimized, because we had to tell him to turn then to move many times.
@@ -259,22 +278,9 @@ algorithm move_to_xy is
 
 Our robot structure is what actually dictated the right functions/mecanisms to catch and throw the ball. But it was also convenient to move around with the hand and the catapult at certain positions. So we decided to implement different functions for all these functionalities. All functions are basically turning the right corresponding motor for a certain period of time that we chose based on many experiments.  
 
-### The bluetooth threads
-
-The bluetooth core functions were established by Matteo Bertolino and the bluetooth repository can be found [here](https://gitlab.eurecom.fr/ludovic.apvrille/OS_Robot_Project_Fall2018).
-
-The bluetooth was implemented thanks to threads. Threads allow to execute instructions while the robot is running. The bluetooth design can be described as followed :
- 1. Initiate the bluetooth connection from the main thread and create two threads
- 1. A thread will permanently run in order to get messages from the server :
-    * When receiving `MSG_START`, it unlocks the robot and the robot can proceed to a given strategy
-    * When receiving `MSG_STOP` or `MSG_KICK`, the robot stops and exits
- 1. A thread runs and waits to be woken up. It used a mutex and a condition variable. The main thread can execute `send_score(int score)` and the thread will wake up and the the corresponding score to the server. When finished, it goes back to sleep.
-
- All the functions and thread routines can be found in `source/client.c`.
-
 ## Our strategy to win
 
-We have two strategies, depending on our opponent. As we are able to throw to balls very fast in the basket, at the very beginning of the game, we could just score two baskets, and then disturb the oppenent in his field and prevent him from scoring. So, here are our strategies:
+We have two strategies, depending on our opponent. As we are able to throw to balls very fast in the basket, at the very beginning of the game, we could just score two baskets, and then disturb the opponent in his field and prevent him from scoring. So, here are our strategies:
 
 * If the opponent can just score one basket at the beginning of the game, or if he can just drop his balls in the basket and not throw them:
 First we score two baskets at the beginning by throwing the balls from the distant area. Therefore we have already 6 points when are opponent has at the most 3 points. Then, we cross our frontiers to get to their side of the field, in order to prevent them from looking for their ball and/or scoring another basket. When we cross the field we loose a point, but we are still at 5 vs 3 : **we win**
@@ -321,8 +327,7 @@ Moreover he worked with Antonin on the second version of the *scan* function.
 
 Antonin was in charge of the Bluetooth connection between the robot and the server, the git management, the compilation (Makefile, headers, etc.) and the scanning function. He implemented two versions of the scan, one coded by himself, and the final one in collaboration with Sami.
 
-Antonin helped Yasmine to integrate the various functions in the main routine.
-
+Antonin helped Yasmine to integrate the various functions in the main routine and helped writing the website.
 
 ### Yasmine Bennani
 
