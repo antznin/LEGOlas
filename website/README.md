@@ -1,6 +1,10 @@
 # LEGOlas : Group 1 ev3 Robot Project
 
 ![Robot logo](./media/robot_logo.jpg)
+<p align="center">
+  <img src="./media/robot_log.jpg"/>
+</p>
+
 
 This robot project was made in the context of the [OS EURECOM course](http://soc.eurecom.fr/OS). The goal of the project was to build an ev3 LEGO programmable robot that can play a "basketball" game in a pre-built field. All the rules and specifications of the field can be found on the [OS website](http://soc.eurecom.fr/OS/projects_fall2018.html).
 
