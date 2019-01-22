@@ -88,8 +88,11 @@ sensor thread is
 	else:
 		return current angle and radius to main thread
 ```
+#### Our second idea
 
-We wanted to move around the field and try to cover as much of the field as possible. However, because of the uncertainty of the postion and of the imprecision of the sonar sensor, we gave up on that idea.
+The first idea had two major defects, firstly the scan cone was sometimes too wide and so the robot found the ball at a considerably large offset angle. The second defect was that, the actual values of the sonar sensor were so different from the theoretical ones. As a solution for the first problem we decided to compute the mean of two relevant positions (meaning that correspond to the same ball). In order to do that we use the following strategy : our new scan consists of turning 360 degrees in relatively positive direction, then once it detects a "ball" it ignores all angle values that follow until the end of the 360 turn. Then it turns in the negative direction ignoring all obstacles that could potentially be in the previously ignored zone minus 30 degrees. Two positions are considered close if the difference between the distances at which they were detected is negligible. This allows us to find the ball in a more reliable way.
+
+To counter the second problem, we wanted to move around the field and try to cover as much of the field as possible. However, because of the uncertainty of the position and of the imprecision of the sonar sensor, we gave up on that ideaespecially that moving around too much requires calibrating all the time and it wouldn't be that beneficial in games that would last 4 minutes to spend much time on that. So we decided to adopt the following strategy.
 
 #### Aim lower, but with more confidence
 
@@ -98,6 +101,8 @@ The scanning was a tough part of the project. The imprecision of the sensor lead
 Let us first show the output of the sonar sensor without any ball and a robot on the other field. We placed the robot at its initial position (inside the square) and printed the output on the terminal. Sami coded a function that, for any given angle, will output the **theoretical** radius (i.e. the distance between an object and the robot), here being the shape of the field : a rectangle.
 
 Here are the mapping results :
+
+Before getting the real output of the sensor we first thought of simply putting as a condition of finding the ball, finding a sonar value that is smaller than the theoretical radius computed by the function that we coded for it, give or take a few centimeters. But the problem was that, the real output didn't even have the shape of a rectangle. So we narrowed our scan to a much smaller rectangle that fits inside most of the graphs that we generated with the real output of the sensor. Making it a lot more reliable, but it still wasn't enough so we eventually decided to scan from a few relevant positions.  
 
 ### Move toward the ball
 
@@ -257,11 +262,7 @@ algorithm move_to_xy is
 
 ### Catch and throw the ball
 
-```
-algorithm throw_ball is
-    input:  
-
-```
+Our robot structure is what actually dictated the right functions/mecanisms to catch and throw the ball. But it was also convenient to move around with the hand and the catapult at certain positions. So we decided to implement different functions for all these functionalities. All functions are basically turning the right corresponding motor for a certain period of time that we chose based on many experiments.  
 
 ### Our strategy to win
 
@@ -292,9 +293,9 @@ First we score two baskets from the distant area: we have 6 points, but so they 
 
 ### Sami AAZMI
 
-Sami was in charge of the construction of the robot: we discussed all together for a long time about the "design" of our robot, and about how to be able to efficiently and reliably catch and throw a ball. Sami constructed the robot so its architecture is strong and reliable. He also placed the sensors at the proper position to have a result as good as possible.
-He also implemented the functions that activate the arm and the catapult. There are ... of them.
-Moreover he worked with Antonin on another version of the *scan* function.
+Sami was in charge of the construction of the robot: we discussed all together for a long time about the "design" of our robot, and about how to efficiently and reliably catch and throw a ball. Sami constructed a considerable amount of  prototypes of the hand/catapult design, while always focusing on the balance and the compactness of the robot as a whole, which eventually made its architecture strong and reliable. He also placed the sensors at the most convenient positions to have the best results possible.
+He also implemented the functions that activate the arm and the catapult.
+Moreover he worked with Antonin on the second version of the *scan* function.
 
 ### Antonin Godard
 
