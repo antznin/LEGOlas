@@ -2,9 +2,7 @@
 #define MOVEMENT_H_ 
 
 float init_value_compass;
-void move_forward(int dist);
 void curved_turn(float left_factor, float right_factor, int runtime);
-void turn(float angle);
 void go_to_corner(int to_right); // Go to right corner if to_right = 1, otherwise go to left corner
 void shoot_from_stage1();
 void shoot_from_stage2();

@@ -14,7 +14,6 @@ struct morevalues {
 struct values scan(float angle, float radius);
 struct values single_scan(int sleep_value, 
 		int scan_id, 
-		float radius_value, 
 		int sign, 
 		float ignore_angle);
 float theoretical_radius(float angle);
