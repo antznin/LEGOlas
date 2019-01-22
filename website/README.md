@@ -44,7 +44,7 @@ The robot complies to the given [specifications](http://soc.eurecom.fr/OS/projec
  ![Gyro and flag](./media/gyro_flag.jpg)
 
 
-## Algorithms and strategy
+## Algorithms 
 
 ### Find a ball: the scan
 
@@ -259,7 +259,20 @@ algorithm move_to_xy is
 
 Our robot structure is what actually dictated the right functions/mecanisms to catch and throw the ball. But it was also convenient to move around with the hand and the catapult at certain positions. So we decided to implement different functions for all these functionalities. All functions are basically turning the right corresponding motor for a certain period of time that we chose based on many experiments.  
 
-### Our strategy to win
+### The bluetooth threads
+
+The bluetooth core functions were established by Matteo Bertolino and the bluetooth repository can be found [here](https://gitlab.eurecom.fr/ludovic.apvrille/OS_Robot_Project_Fall2018).
+
+The bluetooth was implemented thanks to threads. Threads allow to execute instructions while the robot is running. The bluetooth design can be described as followed :
+ 1. Initiate the bluetooth connection from the main thread and create two threads
+ 1. A thread will permanently run in order to get messages from the server :
+    * When receiving `MSG_START`, it unlocks the robot and the robot can proceed to a given strategy
+    * When receiving `MSG_STOP` or `MSG_KICK`, the robot stops and exits
+ 1. A thread runs and waits to be woken up. It used a mutex and a condition variable. The main thread can execute `send_score(int score)` and the thread will wake up and the the corresponding score to the server. When finished, it goes back to sleep.
+
+ All the functions and thread routines can be found in `source/client.c`.
+
+## Our strategy to win
 
 We have two strategies, depending on our opponent. As we are able to throw to balls very fast in the basket, at the very beginning of the game, we could just score two baskets, and then disturb the oppenent in his field and prevent him from scoring. So, here are our strategies:
 
@@ -275,7 +288,7 @@ First we score two baskets from the distant area: we have 6 points, but so they 
 
 ## Source code
 
-### Instructions
+### Installation and usage
 
 * How to compile the source code:
 
