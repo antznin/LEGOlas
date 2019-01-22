@@ -2,7 +2,7 @@
 
 ![Robot logo](./media/robot_logo.jpg)
 <p align="center">
-  <img src="./media/robot_log.jpg"/>
+  <img src="./media/robot_logo.jpg"/>
 </p>
 
 
