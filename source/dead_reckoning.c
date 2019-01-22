@@ -18,7 +18,7 @@
 #define Sleep( msec ) usleep(( msec ) * 1000 )
 #define LEFT_BORDER -80 //Width of the field in centimeter
 #define RIGHT_BORDER 50 //Length of the field
-#define UP_BORDER 50
+#define UP_BORDER 40
 #define BOTTOM_BORDER -50
 #define CLOCK_PER 0.12
 
@@ -71,7 +71,7 @@ void *dead_reckoning(void* unused)
             get_tacho_speed_sp(sn_right, &speed_right); // Get right_speed
             state = current_position.state;
             
-            printf("State: %s      x: %f    y: %f     theta: %f\n", state, current_position.x, current_position.y, current_position.theta);
+           // printf("State: %s      x: %f    y: %f     theta: %f\n", state, current_position.x, current_position.y, current_position.theta);
             
             if(speed_left == (-speed_right))
             {
@@ -270,7 +270,7 @@ int move_to_xy(float x, float y){
         /* Move until the robot has reached his destination */
         while((round(x0) < round(x)-2 || round(x0) > round(x)+2 || round(y0) < round(y)-2 || round(y0) > round(y)+2) && strcmp((const char *) "TACHO_STOP", (const char *) state) != 0)
         {
-            printf("round(x0): %f, round(x): %f, round(y0): %f, round(y): %f \n", round(x0), round(x), round(y0), round(y));
+            //printf("round(x0): %f, round(x): %f, round(y0): %f, round(y): %f \n", round(x0), round(x), round(y0), round(y));
             x0 = current_position.x;
             y0 = current_position.y;
             state = current_position.state;
@@ -334,10 +334,6 @@ void move_forward(int dist){
         set_tacho_time_sp( sn_right, t*1000 );
         set_tacho_command_inx( sn_left, TACHO_RUN_TIMED );
         set_tacho_command_inx( sn_right, TACHO_RUN_TIMED );
-        
-        /*rewrite_state((char *)"TACHO_RUN_TIMED");
-        Sleep(t*1000);
-        rewrite_state((char *)"TACHO_STOP");*/
         
         Sleep(t*1000);
         theta = current_position.theta;

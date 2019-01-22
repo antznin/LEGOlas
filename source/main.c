@@ -73,9 +73,10 @@ int init_robot( void ) // Find the tachos
 void strategy1(){
     /* Go to the opponent's field */
     turn(45);
-    curved_turn(0.643, 1, 4000);
+    curved_turn(0.62, 1, 4500);
     release_catapult();
-    move_forward(5);
+    move_forward(15);
+    hold_catapult_for_movement();
     Sleep(120 * 1000); // Sleep for 2 minutes
 }
 
@@ -97,21 +98,27 @@ void strategy2(){
         count += 1;
         
         /* Move to the three different scan positions */
-        if((count % 3) == 1){
-            move_to_xy(-8,11);
+        if((count % 4) == 1){
+            move_to_xy(0,8);
             init_orientation();
         }
-        else if((count % 3) == 2){
-            move_to_xy(-18, -12);
+        else if((count % 4) == 2){
+            move_to_xy(-8, 8);
             init_orientation();
         }
-        else if((count % 3) == 0){
-            move_to_xy(6, -12);
+        else if((count % 4) == 3){
+            move_to_xy(-8, -8);
+            init_orientation();
+        }
+        else if((count % 4) == 0){
+            move_to_xy(8, -8);
             init_orientation();
         }
         
-        first_scan_values = single_scan(DELAY,1,1,360);
-        second_scan_values = single_scan(DELAY,2,-1,first_scan_values.angle);
+        first_scan_values = single_scan(1000,1,1,360);
+        printf("first scan %f %f \n",first_scan_values.radius,first_scan_values.angle);
+        second_scan_values = single_scan(1000,2,-1,first_scan_values.angle);
+        printf("second scan %f %f \n",second_scan_values.radius,first_scan_values.angle);
         
         if (are_close(first_scan_values,second_scan_values)){
             ball_position.radius = (first_scan_values.radius + second_scan_values.radius)/2;
@@ -119,6 +126,7 @@ void strategy2(){
             printf("Ball is at radius %f , angle %f ", ball_position.radius,ball_position.angle);
             theta = get_theta();
             turn((180*theta)/PI - ball_position.angle);
+            turn(ball_position.angle);
             dismiss_hand_nc();
             release_catapult();
             move_forward((int)(ball_position.radius/10) - ARM_LENGTH);
@@ -130,12 +138,14 @@ void strategy2(){
             dismiss_hand_wc();
             throw_ball();
             send_score(3);
+            hold_catapult_for_movement();
+            place_hand_for_movement();
         }
     }
 }
 
 
-int main(int argc, char *argv[]){
+int main(int argc, char * argv []){
     int is_init;
     /* Check for the right initialization of the robot */
     is_init = init_robot();
@@ -156,9 +166,11 @@ int main(int argc, char *argv[]){
     dismiss_hand_wc();
     move_forward(-8);
     throw_ball();
-    catch_ball(1200);
+    send_score(3);
+    catch_ball(1400);
     dismiss_hand_wc();
     throw_ball();
+    send_score(3);
     hold_catapult_for_movement();
     place_hand_for_movement();
     

@@ -197,7 +197,7 @@ struct values partial_scan(float angle, float radius) {
 
 struct values single_scan(int sleep_value, 
 		int scan_id, 
-		int sign, 
+		int sign,
 		float ignore_angle) {
 
 	uint8_t sn1, sn2, sncompass, snsonar;
@@ -259,9 +259,6 @@ struct values single_scan(int sleep_value,
 		set_tacho_command_inx( sn1, TACHO_RUN_FOREVER );
 		set_tacho_command_inx( sn2, TACHO_RUN_FOREVER );
 
-		printf("For angle %f, radius %f\n", 140.9, theoretical_radius(140.9));
-		printf("For angle %f, radius %f\n", 158.0, theoretical_radius(158.0));
-
 		printf("Ignore : %f\n", ignore_angle);
 		while ( fabs(initial_angle - compass_value) < 360.0 ) {
 				get_sensor_value0(snsonar, &sonar_value);
@@ -269,13 +266,14 @@ struct values single_scan(int sleep_value,
 				current_angle = compass_value - initial_angle;
 				// printf("Angle in single_scan : %f\n", sign * current_angle);
 				// printf("Sonar value : %f\n", sonar_value);
-				printf("%f %f\n",
-						theoretical_radius(fabs(current_angle)),
-						fabs(current_angle));
-				printf("%f %f\n", sonar_value, current_angle);
+				//printf("%f %f\n",
+						//theoretical_radius(fabs(current_angle)),
+						//fabs(current_angle));
+				//printf("%f %f\n", sonar_value, current_angle);
 				if (sonar_value < theoretical_radius(fabs(current_angle)) 
 						&& found == 0 
-						&& fabs(current_angle) > ( 360 - ignore_angle - 40)) 
+						&& fabs(current_angle) > ( 360 - ignore_angle - 40)
+                    && sonar_value != 326.0)
 				{ 
 						// myvalues[count].radius = sonar_value;
 						// myvalues[count].angle = current_angle;
@@ -299,7 +297,7 @@ struct values single_scan(int sleep_value,
 }
 
 int are_close(struct values coordinates_1, struct values coordinates_2){
-	if (fabs(coordinates_1.radius - coordinates_2.radius) < 20) {
+	if (fabs(coordinates_1.radius - coordinates_2.radius) < 60) {
 		return 1;
 	}
 	else return 0;
@@ -334,18 +332,18 @@ int are_close(struct values coordinates_1, struct values coordinates_2){
  float theoretical_radius(float angle){
     float radius;
     float maxY = 200;
-    float maxX = 435;
-    float minY = 465;
-    float minX = 435;
+    float maxX = 390;
+    float minY = 400;
+    float minX = 390;
     float degToRad = PI/180;
     float reduced_angle = degToRad * angle ;
-    float q1 = 65.0 ; //66.57
+    float q1 = 62.2 ; //66.57
     float q2 = 90.0;
-    float q3 = 137.0 ; //140.2
+    float q3 = 135.6 ; //140.2
     float q4 = 180.0;
-    float q5 = 222.4; //219.8
+    float q5 = 224.6; //219.8
     float q6 = 270.0;
-    float q7 = 294.43; //293.43
+    float q7 = 297.0; //293.43
     float q8 = 360.0;
       if (angle >= 0 && angle <= q1 ){
         radius = abs(maxY/cos(reduced_angle));
