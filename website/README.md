@@ -10,10 +10,12 @@ This robot project was made in the context of the [OS EURECOM course](http://soc
 
 The final design of our robot looks as so :
 
-![Image there](./media/robot.jpg)
+![The robot](./media/robot.jpg)
+![The robot](./media/robot2.jpg)
+![The robot](./media/robot_top.jpg)
 
 The robot complies to the given [specifications](http://soc.eurecom.fr/OS/projects_fall2018.html#specification) :
- * Its dimensions are X × X × X
+ * Its dimensions are 21cm × 22cm × 30cm when folded, and 31cm × 24cm × 18cm when unfolded
  * The robot uses four tacho engines :
    * Two for the wheels
    * One for the catapult arm
@@ -30,7 +32,7 @@ The robot complies to the given [specifications](http://soc.eurecom.fr/OS/projec
    * According to its documentation, that one can find on the [LEGO website](https://shop.lego.com/en-US/product/EV3-Ultrasonic-Sensor-45504), this sensor should measure distance between one and 250 cm. Unfortunately, the experience showed us that when a ball was too close from the robot, the sensor did not return the corresponding distance, and we were therefore unfit to detect the ball. 
    * Position on the robot: very close from the floor, and parallel to it, as one can see on the image below:
  
- ![Image there](./media/us_sensor.jpg)
+ ![The sonar sensor](./media/sonar.jpg)
  
   * We used this sensor to detect the ball on the field, and more particularly to get its distance from the robot, to be able to move toward it and to catch it.
  
@@ -39,14 +41,7 @@ The robot complies to the given [specifications](http://soc.eurecom.fr/OS/projec
   * According to the documentation that on can find on the [LEGO website](https://shop.lego.com/en-CA/product/EV3-Gyro-Sensor-45505), the angle mode measures angles with an accuracy of +/- 3 degrees. It was enough for us in order to be able to turn the robot through a given angle. 
   * Position on the robot: centered and horizontal, in order to be able to measure the rotation around the perpendicular angle.
 
- ![Image there](./media/gyro_sensor.jpg)
-
-* EV3 Color Sensor:
-    * Principle: distinguishes between eight different colors (between blue, green, yellow, red, white and brown, and between a color and black and white)
-    * Its documentation can be found here, on the [LEGO website](https://shop.lego.com/en-LU/product/EV3-Color-Sensor-45506), for further information
-    * Position on the robot: above the catapult, in order to see if we really have catched a ball. Indeed, when we catch a ball, the arm "pushes" it into the catapult. So, before throwing it in the basket, we first look at the color returned by the EV3 Color Sensor: if its yellow, red or blue, then the robot has succeded in catching the ball, otherwise we must look for it again.
-    
- ![Image there](./media/color_sensor.jpg)
+ ![Gyro and flag](./media/gyro_flag.jpg)
 
 
 ## Algorithms and strategy
@@ -92,9 +87,9 @@ sensor thread is
 
 The first idea had two major defects, firstly the scan cone was sometimes too wide and so the robot found the ball at a considerably large offset angle. The second defect was that, the actual values of the sonar sensor were so different from the theoretical ones. As a solution for the first problem we decided to compute the mean of two relevant positions (meaning that correspond to the same ball). In order to do that we use the following strategy : our new scan consists of turning 360 degrees in relatively positive direction, then once it detects a "ball" it ignores all angle values that follow until the end of the 360 turn. Then it turns in the negative direction ignoring all obstacles that could potentially be in the previously ignored zone minus 30 degrees. Two positions are considered close if the difference between the distances at which they were detected is negligible. This allows us to find the ball in a more reliable way.
 
-To counter the second problem, we wanted to move around the field and try to cover as much of the field as possible. However, because of the uncertainty of the position and of the imprecision of the sonar sensor, we gave up on that ideaespecially that moving around too much requires calibrating all the time and it wouldn't be that beneficial in games that would last 4 minutes to spend much time on that. So we decided to adopt the following strategy.
+To counter the second problem, we wanted to move around the field and try to cover as much of the field as possible. However, because of the uncertainty of the position and of the imprecision of the sonar sensor, we gave up on that idea especially that moving around too much requires calibrating all the time and it wouldn't be that beneficial in games that would last 4 minutes to spend much time on that. So we decided to adopt the following strategy.
 
-#### Aim lower, but with more confidence
+**Aim lower, but with more confidence :**
 
 The scanning was a tough part of the project. The imprecision of the sensor lead us to aim at a lower distance, but optimized the scanning area based on the **real output** of the sensor.
 
@@ -104,7 +99,7 @@ Here are the mapping results :
 
 Before getting the real output of the sensor we first thought of simply putting as a condition of finding the ball, finding a sonar value that is smaller than the theoretical radius computed by the function that we coded for it, give or take a few centimeters. But the problem was that, the real output didn't even have the shape of a rectangle. So we narrowed our scan to a much smaller rectangle that fits inside most of the graphs that we generated with the real output of the sensor. Making it a lot more reliable, but it still wasn't enough so we eventually decided to scan from a few relevant positions.  
 
-### Move toward the ball
+### Move towards the ball
 
 These algorithms have been written by Yasmine Bennani.
 First, I implemented only the *move_forward* and the *turn* functions. Therefore, the robot was able to move forward a given distance in centimeter, and to turn through a given angle. But it was then troublesome to know exactly which distance should be runned during the explore state (the state during which the robot explores the field in order to find a ball). Moreover, the path taken by the robot was not optimized, because we had to tell him to turn then to move many times.
@@ -283,8 +278,17 @@ First we score two baskets from the distant area: we have 6 points, but so they 
 ### Instructions
 
 * How to compile the source code:
+
+    The Makefile should compile and link every files together in the `main` executable. But note that :
+    * You must compile the source code either in the robot itself or in an ev3 docker. Instructions to configure the docker can be found on the [OS website](http://soc.eurecom.fr/OS/projects_fall2018.html#cross).
+    * You will probably have to clone the [ev3dev-c](https://github.com/in4lio/ev3dev-c), as it is not cloned when cloning our repository. This repository contains all the required librairies in order to command the robot.
+    * You must install the `libbluetooth-dev` package either on the docker or robot in order to communicate with the [server](https://gitlab.eurecom.fr/ludovic.apvrille/OS_Robot_Project_Fall2018/tree/master/server).
 * How to download it on the robot:
+
+    If you compiled the executable on a docker, you must copy over ssh the `main` executable via scp. Instructions to setup ssh with the robot can be found on the [ev3 website](https://www.ev3dev.org/docs/tutorials/connecting-to-ev3dev-with-ssh/)
 * How to start the robot:
+
+    To start the robot, you can either execute `main` via ssh (bluetooth or wired connection) or navigate into the robot's File Browser and simply press the `main*` executable. 
 
 ## Some videos
 
@@ -294,22 +298,27 @@ First we score two baskets from the distant area: we have 6 points, but so they 
 ### Sami AAZMI
 
 Sami was in charge of the construction of the robot: we discussed all together for a long time about the "design" of our robot, and about how to efficiently and reliably catch and throw a ball. Sami constructed a considerable amount of  prototypes of the hand/catapult design, while always focusing on the balance and the compactness of the robot as a whole, which eventually made its architecture strong and reliable. He also placed the sensors at the most convenient positions to have the best results possible.
+
 He also implemented the functions that activate the arm and the catapult.
 Moreover he worked with Antonin on the second version of the *scan* function.
 
 ### Antonin Godard
 
-Antonin was in charge of the Bluetooth connection between the robot and the server, and of the *scan* function. He implemented two versions of this latter, one by himself, and the other with Sami.
+Antonin was in charge of the Bluetooth connection between the robot and the server, the git management, the compilation (Makefile, headers, etc.) and the scanning function. He implemented two versions of the scan, one coded by himself, and the final one in collaboration with Sami.
+
+Antonin helped Yasmine to integrate the various functions in the main routine.
 
 
 ### Yasmine Bennani
 
 I was in charge of the movements of the tachos. I implemented the different functions that make the robot move and turn, such as *move_forward*, ¨move_to_xy* or *turn*.
 I also took in charge of the system integration for each evaluation (for th 18th December and then for the 22th January).
+
 For the 18th December, the system integration highlighted the fact that moving the robot with only the *move_forward(dist)* and the *turn(angle)* functions was troublesome. Indeed, in order to explore the whole field, we wanted to place the robot at each corner of the field in a row, so moving from one to another took a lot of time of determining the right distance to be runned. Moreover, when it has found a ball, it was hard to know exactly where the robot was exactly on the field to tell him to go to the **shoot position**, which is the **init position**.
+
 Therefore, after this evaluation, I implemented my own version of the **dead reckoning** process. I was researching a way to be able to know the position of the robot at each time, like a GPS, when I found this kind of process used in navigation. Knowing the current position, this algorithm calculates nonstop the new position, as long as the wheels are running, i.e. as long as the robot position is changing. Thus I made a thread, which tests if the robot is moving, and if it is, the thread updates its position (x,y and its orientation theta). The field is considered as follow: 
 
- ![Image there](./media/dr_graph.jpg)
+ ![Graph](./media/dr_graph.jpg)
 
 Thanks to this thread, I was then able to implement a *move_to_xy* function, to tell the robot to move from its current position to another one defined by its coordinates x, y. As the robot is oriented, this function has to calculte first the angle that need to be turned in order to be in the right direction, and then calculates the distance that to be runned. The thread updates in the backgroud the robot coordinates and orientation.
 
