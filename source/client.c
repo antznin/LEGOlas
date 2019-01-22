@@ -15,7 +15,7 @@
 #include "ev3_tacho.h"
 #include "ev3_sensor.h"
 
-#define SERV_ADDR	"18:5e:0f:9d:7c:99"     /* Sami's MAC address */
+#define SERV_ADDR	"18:5e:0f:9d:7c:99"     /* Server's MAC address */
 #define TEAM_ID 	1                       /* Team ID */
 #define MSG_ACK 	0
 #define MSG_START 	1
